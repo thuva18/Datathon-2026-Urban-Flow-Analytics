@@ -270,77 +270,62 @@ print(f"Full-dataset quality audit completed in {time.time() - t_audit:.2f} seco
 
 N = audit_res['total_rows']
 
+# Tabulate purely empirical audit measurements
 anomaly_records = [
     {
         "Anomaly Category": "Negative Base Fare (base_fare < 0)",
         "Impacted Rows": int(audit_res['neg_base_fare']),
-        "Share of Data (%)": (audit_res['neg_base_fare'] / N) * 100,
-        "Recommended Action": "Drop / Exclude",
-        "Engineering Justification": "Represents bookkeeping reversals, disputed charges, or meter errors. Retaining negative values corrupts predictive pricing regressions."
+        "Share of Dataset (%)": round((audit_res['neg_base_fare'] / N) * 100, 4)
     },
     {
         "Anomaly Category": "Negative Total Charge (charge_total < 0)",
         "Impacted Rows": int(audit_res['neg_charge_total']),
-        "Share of Data (%)": (audit_res['neg_charge_total'] / N) * 100,
-        "Recommended Action": "Drop / Exclude",
-        "Engineering Justification": "Negative total charges represent voided or refunded transactions rather than authentic passenger transportation."
+        "Share of Dataset (%)": round((audit_res['neg_charge_total'] / N) * 100, 4)
     },
     {
         "Anomaly Category": "Zero Distance with Positive Fare",
         "Impacted Rows": int(audit_res['zero_dist_pos_fare']),
-        "Share of Data (%)": (audit_res['zero_dist_pos_fare'] / N) * 100,
-        "Recommended Action": "Filter / Separate",
-        "Engineering Justification": "Indicates stationary waiting time, passenger no-shows, or immediate cancellations. Must be excluded from travel-time and distance-based fare regression models."
+        "Share of Dataset (%)": round((audit_res['zero_dist_pos_fare'] / N) * 100, 4)
     },
     {
         "Anomaly Category": "Zero or Missing Rider Count",
         "Impacted Rows": int(audit_res['zero_or_null_riders']),
-        "Share of Data (%)": (audit_res['zero_or_null_riders'] / N) * 100,
-        "Recommended Action": "Impute (Median = 1)",
-        "Engineering Justification": "Affects 26.00% of the entire dataset (12.6M trips). Dropping this volume would discard legitimate mobility patterns. Because trips require a passenger and median=1, imputing rider_count = 1 preserves data integrity."
+        "Share of Dataset (%)": round((audit_res['zero_or_null_riders'] / N) * 100, 4)
     },
     {
         "Anomaly Category": "Drop-off <= Pickup Timestamp",
         "Impacted Rows": int(audit_res['dropoff_before_pickup']),
-        "Share of Data (%)": (audit_res['dropoff_before_pickup'] / N) * 100,
-        "Recommended Action": "Drop / Exclude",
-        "Engineering Justification": "Temporal impossibility violating physical causality due to meter clock resets or premature closing. Cannot be used for duration estimation."
+        "Share of Dataset (%)": round((audit_res['dropoff_before_pickup'] / N) * 100, 4)
     },
     {
         "Anomaly Category": "Unrealistic Urban Speed (> 65 mph)",
         "Impacted Rows": int(audit_res['speed_gt_65mph']),
-        "Share of Data (%)": (audit_res['speed_gt_65mph'] / N) * 100,
-        "Recommended Action": "Filter / Drop",
-        "Engineering Justification": "Speeds exceeding 65 mph within NYC surface streets stem from GPS tracking jumps or erroneous timestamp logging. Dropping this 0.03% removes extreme leverage outliers."
+        "Share of Dataset (%)": round((audit_res['speed_gt_65mph'] / N) * 100, 4)
     },
     {
         "Anomaly Category": "Excessive Duration (> 24 Hours)",
         "Impacted Rows": int(audit_res['duration_gt_24h']),
-        "Share of Data (%)": (audit_res['duration_gt_24h'] / N) * 100,
-        "Recommended Action": "Filter / Drop",
-        "Engineering Justification": "Taxi meters accidentally left active over multiple days before being closed. Represents 405 records (0.0008%) and severely skews duration prediction."
+        "Share of Dataset (%)": round((audit_res['duration_gt_24h'] / N) * 100, 6)
     },
     {
         "Anomaly Category": "Out-of-Range Timestamp (<2025-04 or >2026-03)",
         "Impacted Rows": int(audit_res['out_of_range_timestamp']),
-        "Share of Data (%)": (audit_res['out_of_range_timestamp'] / N) * 100,
-        "Recommended Action": "Filter / Drop",
-        "Engineering Justification": "Clock default reset records (e.g., year 2008) falling outside the valid 12-month evaluation window."
+        "Share of Dataset (%)": round((audit_res['out_of_range_timestamp'] / N) * 100, 6)
     }
 ]
 
 df_anomalies = pd.DataFrame(anomaly_records)
-print("Data Quality & Anomaly Quantification Table:")
-display(df_anomalies[['Anomaly Category', 'Impacted Rows', 'Share of Data (%)', 'Recommended Action']])
+print(f"Empirical Data Quality Audit Findings (Total Records: {int(N):,}):")
+display(df_anomalies)
 """
 cells.append(nbf.v4.new_code_cell(c9_code))
 
 # --- CELL 10 (Code) ---
-c10_code = """# Visualization of Anomaly Prevalence
+c10_code = """# Visualization of Empirical Anomaly Prevalence
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 5.5))
 
 # Chart 1: Percentage of records impacted
-sns.barplot(data=df_anomalies, x='Share of Data (%)', y='Anomaly Category', palette='viridis', ax=ax1)
+sns.barplot(data=df_anomalies, x='Share of Dataset (%)', y='Anomaly Category', palette='viridis', ax=ax1)
 ax1.set_title('Data Quality Anomalies: Share of Total Dataset (%)', fontsize=13, fontweight='bold')
 ax1.set_xlabel('Percentage of Total Rows (%)')
 for p in ax1.patches:
@@ -365,7 +350,73 @@ plt.show()
 cells.append(nbf.v4.new_code_cell(c10_code))
 
 # --- CELL 11 (Markdown) ---
-c11_md = """## 4. Exploratory Data Analysis (EDA)
+c11_md = """### Post-Audit Analysis & Engineering Justification (Challenge Section 1)
+
+Now that the empirical audit across the entire **48,601,782 records** has completed and the exact proportions are revealed, we interpret the findings and formally justify the recommended handling strategy (**Drop**, **Impute**, or **Filter**) for every anomaly category:
+
+---
+
+#### 1. Zero or Missing Rider Count (Observed: 26.00% / 12,636,846 records)
+* **Empirical Finding**: Over a quarter (26.00%) of all trip records have `rider_count` recorded as `0.0` or `NULL`.
+* **Evaluation of Options**:
+  * *Option A (Drop)*: Dropping 26% of the dataset would discard over **12.6 million authentic trips**, inducing massive survivorship bias and severely distorting spatial flow densities, hourly demand curves, and revenue totals.
+  * *Option B (Impute)*: Because these records possess valid meter timestamps, pickup/dropoff coordinates, and metered fares, passenger transportation unequivocally occurred. Under TLC regulations, an active metered ride carries at least 1 rider. Across all non-zero records, both the **median** and **mode** passenger count is exactly **1.0**.
+* **Decision & Justification**: **IMPUTE with Median (`rider_count = 1`)**. Preserves 100% of mobility patterns without discarding data or artificially inflating passenger load.
+
+---
+
+#### 2. Negative Base Fares & Charges (Observed: 4.94% Base Fare, 1.80% Total Charge)
+* **Empirical Finding**: 2,400,031 records contain negative base fares, and 875,399 records contain negative total charges.
+* **Evaluation of Options**:
+  * Negative amounts represent administrative bookkeeping adjustments, disputed credit card chargebacks, meter calibration reversals, or driver error corrections.
+  * They do not reflect physical travel pricing and cannot be reliably reconstructed from distance or duration without introducing synthetic bias.
+* **Decision & Justification**: **DROP / EXCLUDE**. Removing negative fares ensures training sets for predictive pricing engines (Track 2.1) are uncorrupted by accounting reconciliations.
+
+---
+
+#### 3. Zero Distance with Positive Fare (Observed: 2.61% / 1,267,110 records)
+* **Empirical Finding**: 1,267,110 trips recorded `distance_miles == 0.0` but `base_fare > 0.0`.
+* **Evaluation of Options**:
+  * These records represent legitimate transactions stemming from stationary waiting time, passenger no-shows, or immediate cancellations after dispatch.
+  * However, for distance-based fare regression models ($base\_fare = f(distance, ...)$) and travel-time estimators, 0-distance records with non-zero fares act as high-leverage outliers that degrade model slope estimation.
+* **Decision & Justification**: **FILTER / ISOLATE**. Exclude from travel-time and upfront fare prediction models, but preserve in operational wait-time accounting.
+
+---
+
+#### 4. Drop-off $\le$ Pickup Timestamp (Observed: 1.34% / 651,610 records)
+* **Empirical Finding**: 651,610 records have drop-off timestamps earlier than or identical to pickup timestamps.
+* **Evaluation of Options**:
+  * Violates physical temporal causality ($Duration \le 0$). Caused by meter clock desynchronization or premature manual closing.
+* **Decision & Justification**: **DROP / EXCLUDE**. These trips cannot provide valid duration labels for travel-time modeling.
+
+---
+
+#### 5. Unrealistic Speeds (> 65 mph) & Extreme Durations (> 24h)
+* **Empirical Finding**: 15,866 trips (0.03%) exhibit speeds exceeding 65 mph in NYC arterials, and 405 trips (0.0008%) span over 24 hours.
+* **Evaluation of Options**:
+  * Speeds above 65 mph on city streets indicate GPS tracking jumps or severe timestamp corruption. Durations exceeding 24 hours reflect forgotten active meters.
+  * Due to their negligible proportion (<0.04% combined), dropping them eliminates extreme leverage points without affecting statistical power.
+* **Decision & Justification**: **FILTER / DROP as tail outliers**.
+
+---
+
+### Anomaly Treatment Decision Matrix:
+
+| Anomaly Category | Impacted Rows | Share of Data (%) | Recommended Action | Engineering Justification Summary |
+| :--- | :---: | :---: | :---: | :--- |
+| **Zero or Missing Rider Count** | 12,636,846 | **26.00%** | **Impute (Median = 1)** | Dropping 26% causes massive data loss; imputing median 1 preserves valid trips. |
+| **Negative Base Fare** | 2,400,031 | **4.94%** | **Drop / Exclude** | Accounting reversals and chargeback disputes; distorts predictive pricing models. |
+| **Negative Total Charge** | 875,399 | **1.80%** | **Drop / Exclude** | Non-operational financial refunds. |
+| **Zero Distance with Positive Fare** | 1,267,110 | **2.61%** | **Filter / Isolate** | Represents waiting time / cancellation fee; isolate from travel-time modeling. |
+| **Drop-off $\le$ Pickup Timestamp** | 651,610 | **1.34%** | **Drop / Exclude** | Violates physical temporal causality due to meter clock desynchronization. |
+| **Speed > 65 mph (Urban arterial)** | 15,866 | **0.03%** | **Filter / Drop** | Sensor GPS jumps and erroneous timestamps. |
+| **Trip Duration > 24 Hours** | 405 | **0.0008%** | **Filter / Drop** | Meters left running over several days by accident. |
+| **Out-of-Range Timestamps** | 14 | **<0.0001%** | **Filter / Drop** | Hardware default clock reset (e.g., year 2008). |
+"""
+cells.append(nbf.v4.new_markdown_cell(c11_md))
+
+# --- CELL 12 (Markdown) ---
+c12_md = """## 4. Exploratory Data Analysis (EDA)
 
 ### 4.1 Statistical Distribution of Clean Operational Trips
 We now evaluate the statistical distributions of core mobility and financial indicators on clean operational trips:
@@ -376,9 +427,9 @@ We now evaluate the statistical distributions of core mobility and financial ind
 - Duration between 1 minute (60s) and 5 hours (18,000s)
 - Speed between 1 mph and 65 mph
 """
-cells.append(nbf.v4.new_markdown_cell(c11_md))
+cells.append(nbf.v4.new_markdown_cell(c12_md))
 
-# --- CELL 12 (Code) ---
+# --- CELL 13 (Code) ---
 c12_code = """# Executive statistical summary of valid operational trips
 clean_stats_sql = f'''
 SELECT
