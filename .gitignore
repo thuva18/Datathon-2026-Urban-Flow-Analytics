@@ -1,0 +1,20 @@
+# Large CSVs & Parquets (>100MB violates GitHub limits)
+Urban_Flow_Analytics_Taxi_Combined.csv
+Urban_Flow_Analytics_Dataset_csv/
+urban_flow_analytics_merged.parquet
+*.parquet
+*.zip
+*.tar.gz
+
+# Python environments everywhere
+**/.venv/
+code/.venv/
+.venv/
+env/
+venv/
+**/__pycache__/
+*.py[cod]
+
+# Checkpoints & OS
+.ipynb_checkpoints/
+.DS_Store
