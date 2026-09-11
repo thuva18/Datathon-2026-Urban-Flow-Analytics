@@ -10,9 +10,9 @@ from chatbot import response_generator
 
 logger = logging.getLogger("chatbot")
 
-def process_message(user_message: str) -> dict:
+def process_message(user_message: str, conversation_history: list[dict] = None) -> dict:
     """
-    1. Extract Intent
+    1. Extract Intent (with multi-turn history)
     2. Check Clarification
     3. Route to Tool
     4. Generate Final Response
@@ -29,7 +29,7 @@ def process_message(user_message: str) -> dict:
     logger.info(f"Processing message: {user_message}")
     
     # 1. Extraction
-    extraction = intent_extractor.extract_intent(user_message)
+    extraction = intent_extractor.extract_intent(user_message, history=conversation_history)
     if not extraction.get("success"):
         return {
             "answer": f"I hit an error trying to understand your request: {extraction.get('error')}",
@@ -41,9 +41,15 @@ def process_message(user_message: str) -> dict:
         
     # 2. Need Clarification?
     if extraction.get("needs_clarification"):
-        missing = ", ".join(extraction.get("missing_parameters", []))
+        missing_list = extraction.get("missing_parameters", [])
+        if missing_list:
+            missing_str = ", ".join(missing_list)
+            answer = f"To help with that prediction, could you please provide: **{missing_str}**?\n*(For example: 'From JFK Airport to Times Square at 6 PM', or ask me to 'use a sample prediction')*"
+        else:
+            answer = "To help with a prediction, please specify your pickup and drop-off zones (e.g. *'Predict fare from JFK Airport to Times Square at 6 PM'*). You can also ask me to *'use sample ones'*!"
+            
         return {
-            "answer": f"To help with that, could you please provide: {missing}?",
+            "answer": answer,
             "intent": "CLARIFICATION_REQUIRED",
             "tool_used": "None",
             "data": {},
@@ -51,7 +57,6 @@ def process_message(user_message: str) -> dict:
         }
         
     # 3. Route
-    print(extraction)
     tool_result = intent_router.route(extraction, user_message)
     tool_used = tool_result.get("tool_used", "None")
     

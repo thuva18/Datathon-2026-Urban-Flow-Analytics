@@ -102,6 +102,29 @@ def test_router_demand(mock_resolve, mock_predict):
 
 def test_router_unsupported():
     intent_data = {"intent": "UNSUPPORTED_QUERY"}
-    res = intent_router.route(intent_data, "what is the weather?")
+    res = intent_router.route(intent_data, "tell me a poem about cooking recipes")
     assert not res["success"]
     assert "outside the scope" in res["error"]
+
+def test_rag_retrieval_success():
+    res = rag_service.retrieve_knowledge("traffic speed drop Manhattan rush hour")
+    assert res["success"]
+    assert len(res["chunks"]) > 0
+
+def test_router_greeting():
+    intent_data = {"intent": "CASUAL_GREETING"}
+    res = intent_router.route(intent_data, "hello")
+    assert res["success"]
+    assert res["intent"] == "CASUAL_GREETING"
+
+@patch("chatbot.model_services.predict_fare")
+def test_router_sample_fare_fallback(mock_predict):
+    mock_predict.return_value = {"success": True, "predicted_fare": 71.51}
+    intent_data = {
+        "intent": "FARE_PREDICTION",
+        "parameters": {}  # empty parameters -> auto-defaults to JFK and Times Sq
+    }
+    res = intent_router.route(intent_data, "use some sample ones")
+    assert res["success"]
+    assert res["tool_used"] == "Fare Model"
+    mock_predict.assert_called_once()

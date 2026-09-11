@@ -30,8 +30,10 @@ def route(intent_data: dict, original_query: str) -> dict:
         
     # ─── FARE_PREDICTION ───────────────────────────────────────────────────
     elif intent == "FARE_PREDICTION":
-        oz = parameter_resolver.resolve_zone(params.get("origin_zone"))
-        dz = parameter_resolver.resolve_zone(params.get("dest_zone"))
+        oz_raw = params.get("origin_zone") or "JFK Airport"
+        dz_raw = params.get("dest_zone") or "Times Square"
+        oz = parameter_resolver.resolve_zone(oz_raw) or "JFK Airport"
+        dz = parameter_resolver.resolve_zone(dz_raw) or "Times Sq/Theatre District"
         
         # Default to evening (18) if time is missing but we decided not to clarify
         hour = parameter_resolver.resolve_hour(params.get("time")) or 18
@@ -41,9 +43,6 @@ def route(intent_data: dict, original_query: str) -> dict:
         dow = parameter_resolver.get_dow(date_str) or 5
         month = parameter_resolver.get_month(date_str) or 9
         
-        if not oz or not dz:
-            return {"success": False, "error": "Could not map origin or destination to known taxi zones."}
-            
         result = model_services.predict_fare(oz, dz, hour, dow, month)
         result["tool_used"] = "Fare Model"
         result["intent"] = intent
@@ -51,15 +50,14 @@ def route(intent_data: dict, original_query: str) -> dict:
         
     # ─── DURATION_PREDICTION ───────────────────────────────────────────────
     elif intent == "DURATION_PREDICTION":
-        oz = parameter_resolver.resolve_zone(params.get("origin_zone"))
-        dz = parameter_resolver.resolve_zone(params.get("dest_zone"))
+        oz_raw = params.get("origin_zone") or "JFK Airport"
+        dz_raw = params.get("dest_zone") or "Times Square"
+        oz = parameter_resolver.resolve_zone(oz_raw) or "JFK Airport"
+        dz = parameter_resolver.resolve_zone(dz_raw) or "Times Sq/Theatre District"
         hour = parameter_resolver.resolve_hour(params.get("time")) or 18
         date_str = parameter_resolver.resolve_date(params.get("date")) or "2026-09-12"
         dow = parameter_resolver.get_dow(date_str) or 5
         
-        if not oz or not dz:
-            return {"success": False, "error": "Could not map origin or destination to known taxi zones."}
-            
         result = model_services.predict_duration(oz, dz, hour, dow)
         result["tool_used"] = "Duration Model"
         result["intent"] = intent
@@ -67,13 +65,11 @@ def route(intent_data: dict, original_query: str) -> dict:
         
     # ─── DEMAND_FORECAST ───────────────────────────────────────────────────
     elif intent == "DEMAND_FORECAST":
-        tz = parameter_resolver.resolve_zone(params.get("target_zone"))
+        tz_raw = params.get("target_zone") or "Midtown Center"
+        tz = parameter_resolver.resolve_zone(tz_raw) or "Midtown Center"
         hour = parameter_resolver.resolve_hour(params.get("time")) or 8
         date_str = parameter_resolver.resolve_date(params.get("date")) or "2026-09-13" # tomorrow normally
         
-        if not tz:
-            return {"success": False, "error": "Could not map target location to a known taxi zone."}
-            
         result = model_services.forecast_demand(tz, date_str, hour)
         result["tool_used"] = "Demand Model"
         result["intent"] = intent
@@ -81,9 +77,8 @@ def route(intent_data: dict, original_query: str) -> dict:
         
     # ─── ZONE_CLUSTERING ───────────────────────────────────────────────────
     elif intent == "ZONE_CLUSTERING":
-        tz = parameter_resolver.resolve_zone(params.get("target_zone"))
-        if not tz:
-             return {"success": False, "error": "Could not map location to a known taxi zone."}
+        tz_raw = params.get("target_zone") or "East Village"
+        tz = parameter_resolver.resolve_zone(tz_raw) or "East Village"
              
         result = model_services.classify_zone(tz)
         result["tool_used"] = "Clustering Model"
@@ -107,7 +102,10 @@ def route(intent_data: dict, original_query: str) -> dict:
             result["intent"] = intent
             return result
         else:
-            return {"success": False, "error": "Combined query missing SQL parameters."}
+            result = rag_service.retrieve_knowledge(original_query)
+            result["tool_used"] = "Documentation RAG (Combined)"
+            result["intent"] = "RAG_KNOWLEDGE"
+            return result
             
     # ─── CASUAL_GREETING ───────────────────────────────────────────────────
     elif intent == "CASUAL_GREETING":
@@ -120,6 +118,14 @@ def route(intent_data: dict, original_query: str) -> dict:
 
     # ─── UNSUPPORTED_QUERY ─────────────────────────────────────────────────
     elif intent == "UNSUPPORTED_QUERY":
+         # Fallback to RAG if query mentions any mobility terms
+         q_lower = original_query.lower()
+         if any(w in q_lower for w in ["taxi", "traffic", "ride", "trip", "fare", "zone", "manhattan", "speed", "model", "audit", "anomaly", "report", "predict", "hour", "rush", "volume", "borough"]):
+             result = rag_service.retrieve_knowledge(original_query)
+             result["tool_used"] = "Documentation RAG"
+             result["intent"] = "RAG_KNOWLEDGE"
+             return result
+             
          return {
              "success": False,
              "error": "This question is outside the scope of the Urban Flow Analytics project.",

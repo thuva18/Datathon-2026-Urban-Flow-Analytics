@@ -17,6 +17,7 @@ ZONES_FILE   = str(_PROJECT_ROOT / "Urban_Flow_Analytics_Zone_Dataset.csv")
 MODELS_DIR   = str(_PROJECT_ROOT / "models")
 README_FILE  = str(_PROJECT_ROOT / "README.md")
 DATA_DICT_FILE = str(_PROJECT_ROOT / "Data_Dictionary.pdf")
+REPORT_FILE = str(_PROJECT_ROOT / "Gravitons_Technical_Report.pdf")
 
 MODEL_PATHS = {
     "fare":     os.path.join(MODELS_DIR, "fare_prediction_model.pkl"),

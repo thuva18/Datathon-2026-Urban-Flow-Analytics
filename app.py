@@ -262,13 +262,25 @@ with tab3:
     st.success("📈 **Surge Opportunity:** Expected demand spike at JFK Airport at 20:00. Increase driver surge incentive by 1.2x to capture unmet demand.")
 
 with tab4:
-    st.header("🤖 AI Assistant")
-    st.markdown("Ask natural-language questions about taxi analytics, fares, demand, and project documentation.")
+    st.header("🤖 AI Mobility Assistant")
+    st.markdown("Ask natural-language questions about taxi analytics, fares, travel durations, demand forecasts, and project methodology.")
     
     if "messages" not in st.session_state:
         st.session_state.messages = []
-        # Add greeting
-        st.session_state.messages.append({"role": "assistant", "content": "Hello! I can query the 48M+ record taxi dataset, predict fares and durations, forecast demand, and answer questions about the Urban Flow Analytics project. How can I help you today?"})
+        # Add rich greeting
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": (
+                "Hello! I am the **Urban Flow Analytics AI Mobility Assistant**.\n\n"
+                "I have direct access to NYC's **48.6M taxi trip dataset**, **4 pre-trained machine learning models**, and our **technical report**.\n\n"
+                "**Quick-start suggestions:**\n"
+                "- 🔮 *'Predict fare and duration from JFK Airport to Times Square at 6 PM'*\n"
+                "- 🚦 *'How much does traffic speed drop in Manhattan during evening rush hour?'*\n"
+                "- 📈 *'Forecast pickup demand for Midtown Center tomorrow morning'*\n"
+                "- 🗺️ *'What behavioral cluster does East Village belong to?'*\n"
+                "- 🔍 *'How many negative fare anomalies were filtered out in the data audit?'*"
+            )
+        })
 
     chat_container = st.container()
     
@@ -276,22 +288,36 @@ with tab4:
         for msg in st.session_state.messages:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
-                
-                # Show metadata/result if available (removed per user request)
+
+    # Quick action prompt chips
+    st.markdown("##### 💡 Suggested Inquiries")
+    col1, col2, col3, col4 = st.columns(4)
+    quick_prompt = None
+    if col1.button("🚕 JFK ➔ Times Sq", use_container_width=True):
+        quick_prompt = "Predict fare and travel time from JFK Airport to Times Square at 6 PM"
+    if col2.button("🚦 Manhattan Congestion", use_container_width=True):
+        quick_prompt = "How much does traffic speed drop in Manhattan during evening rush hour?"
+    if col3.button("📈 Midtown Forecast", use_container_width=True):
+        quick_prompt = "Forecast pickup demand for Midtown Center tomorrow at 8 AM"
+    if col4.button("🔍 Anomaly Audit", use_container_width=True):
+        quick_prompt = "What anomalies were detected and cleaned in the dataset?"
 
     # User input
-    if user_message := st.chat_input("Ask a question... (e.g. 'How many trips happened yesterday?')"):
+    user_input = st.chat_input("Ask a question... (e.g. 'Predict fare from JFK to Times Square at 6 PM')")
+    user_message = quick_prompt or user_input
+
+    if user_message:
         # Display user message
         st.session_state.messages.append({"role": "user", "content": user_message})
         with chat_container:
             with st.chat_message("user"):
                 st.markdown(user_message)
                 
-        # Get AI response
+        # Get AI response with conversation history context
         with chat_container:
             with st.chat_message("assistant"):
                 with st.spinner("Analyzing request and processing data..."):
-                    result = process_message(user_message)
+                    result = process_message(user_message, conversation_history=st.session_state.messages)
                     answer = result.get("answer", "Error generating response.")
                     intent = result.get("intent")
                     tool_used = result.get("tool_used")

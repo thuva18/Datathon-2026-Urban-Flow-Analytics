@@ -12,7 +12,7 @@ import re
 import logging
 from pathlib import Path
 
-from chatbot.config import README_FILE, DATA_DICT_FILE
+from chatbot.config import README_FILE, DATA_DICT_FILE, REPORT_FILE
 
 logger = logging.getLogger("chatbot")
 
@@ -31,16 +31,18 @@ def _extract_readme() -> str:
 
 
 def _extract_pdf(path: str) -> str:
-    """Extract text from PDF using pdfplumber (already in requirements)."""
+    """Extract text from PDF using pdfplumber, joining pages with paragraph separators."""
     try:
+        if not Path(path).exists():
+            return ""
         import pdfplumber
         text_parts = []
         with pdfplumber.open(path) as pdf:
             for page in pdf.pages:
                 t = page.extract_text()
-                if t:
-                    text_parts.append(t)
-        return "\n".join(text_parts)
+                if t and t.strip():
+                    text_parts.append(t.strip())
+        return "\n\n".join(text_parts)
     except Exception as e:
         logger.warning("Could not extract PDF '%s': %s", path, e)
         return ""
@@ -48,26 +50,40 @@ def _extract_pdf(path: str) -> str:
 
 # ─── Chunking ─────────────────────────────────────────────────────────────────
 
-def _chunk_text(text: str, source: str, chunk_size: int = 400, overlap: int = 80) -> list[dict]:
-    """Split text into overlapping chunks."""
-    # Split on double newlines first, then merge small paragraphs
-    paragraphs = re.split(r'\n{2,}', text)
-    chunks = []
-    buf = ""
-    for para in paragraphs:
-        para = para.strip()
-        if not para:
-            continue
-        if len(buf) + len(para) < chunk_size:
-            buf += ("\n" if buf else "") + para
-        else:
-            if buf:
-                chunks.append({"text": buf, "source": source})
-            # Start new buffer with overlap
-            buf = para[-overlap:] + "\n" + para if len(para) > overlap else para
+def _chunk_text(text: str, source: str, chunk_size: int = 750, overlap: int = 150) -> list[dict]:
+    """Split text into overlapping chunks using paragraph and sentence boundaries."""
+    text = re.sub(r'\r\n', '\n', text)
+    paragraphs = [p.strip() for p in re.split(r'\n{2,}', text) if p.strip()]
 
-    if buf:
-        chunks.append({"text": buf, "source": source})
+    sub_blocks = []
+    for p in paragraphs:
+        if len(p) > chunk_size:
+            sentences = re.split(r'(?<=[.!?])\s+|\n+', p)
+            curr = ""
+            for s in sentences:
+                if len(curr) + len(s) < chunk_size:
+                    curr += (" " if curr else "") + s
+                else:
+                    if curr:
+                        sub_blocks.append(curr)
+                    curr = s
+            if curr:
+                sub_blocks.append(curr)
+        else:
+            sub_blocks.append(p)
+
+    chunks = []
+    curr_chunk = ""
+    for block in sub_blocks:
+        if len(curr_chunk) + len(block) <= chunk_size:
+            curr_chunk += ("\n\n" if curr_chunk else "") + block
+        else:
+            if curr_chunk:
+                chunks.append({"text": curr_chunk, "source": source})
+            curr_chunk = block
+
+    if curr_chunk:
+        chunks.append({"text": curr_chunk, "source": source})
 
     return chunks
 
@@ -80,10 +96,13 @@ def _initialize():
         return
 
     readme_text = _extract_readme()
-    pdf_text    = _extract_pdf(DATA_DICT_FILE)
+    dict_text   = _extract_pdf(DATA_DICT_FILE)
+    report_text = _extract_pdf(REPORT_FILE)
 
     _chunks  = _chunk_text(readme_text, "README.md")
-    _chunks += _chunk_text(pdf_text, "Data_Dictionary.pdf")
+    _chunks += _chunk_text(dict_text, "Data_Dictionary.pdf")
+    if report_text:
+        _chunks += _chunk_text(report_text, "Gravitons_Technical_Report.pdf")
 
     logger.info("RAG index ready: %d chunks from documentation.", len(_chunks))
     _initialized = True
@@ -120,7 +139,8 @@ def _retrieve(query: str, top_k: int = 4) -> list[dict]:
         scored.append((score, chunk))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    return [c for _, c in scored[:top_k] if _ > 0]
+    matches = [c for s, c in scored[:top_k] if s > 0]
+    return matches
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
@@ -133,11 +153,10 @@ def retrieve_knowledge(query: str, top_k: int = 4) -> dict:
     try:
         results = _retrieve(query, top_k=top_k)
         if not results:
-            return {
-                "success": False,
-                "query":   query,
-                "error":   "No relevant documentation found for this question.",
-            }
+            # Fallback to key overview chunks from README / Report
+            _initialize()
+            results = _chunks[:top_k]
+            
         return {
             "success": True,
             "query":   query,

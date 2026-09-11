@@ -29,16 +29,21 @@ SYSTEM_PROMPT = f"""You are the intent extraction engine for the Urban Flow Anal
 Your job is to classify the user's question into one of the exact intents and extract any parameters mentioned.
 
 AVAILABLE INTENTS:
-- DATA_QUERY: Historical questions (e.g. "How many trips yesterday?", "Average fare in Manhattan"). If it's a DATA_QUERY, generate a safe DuckDB SQL query in the 'sql_query' parameter using this schema:
+- DATA_QUERY: Historical aggregate queries (e.g. "Total rides in Manhattan", "Busiest pickup day", "Average fare").
+  If DATA_QUERY, generate a safe DuckDB SQL query in the 'sql_query' parameter using this schema:
 {get_schema_description()}
+  CRITICAL SQL RULES:
+  * The dataset spans 2025-04-01 to 2026-03-31 (48,601,782 records).
+  * NEVER use CURRENT_TIMESTAMP, CURRENT_DATE, or NOW() in SQL queries!
+  * If the user asks about "right now", "today", "yesterday", or current traffic conditions, do NOT query current system dates. Instead query by hour of day (EXTRACT(hour FROM pickup_timestamp)) and day of week (EXTRACT(dow FROM pickup_timestamp)), OR if asking about traffic congestion in Manhattan, classify as RAG_KNOWLEDGE.
 - FARE_PREDICTION: Forecasting future fare cost for a trip between origin and destination.
 - DURATION_PREDICTION: Forecasting trip time/length between origin and destination.
 - DEMAND_FORECAST: Predicting future pickup volume for a specific zone.
 - ZONE_CLUSTERING: Identifying the behavioral cluster/type of a taxi zone.
-- RAG_KNOWLEDGE: Questions about the project, methodology, or dataset documentation.
-- COMBINED_QUERY: Questions requiring multiple tools (e.g. "highest demand tomorrow AND trips last month").
-- CASUAL_GREETING: Conversational greetings, "hello", "hi", "how are you".
-- UNSUPPORTED_QUERY: Questions unrelated to taxi data explicitly.
+- RAG_KNOWLEDGE: Questions about the project, methodology, dataset documentation, findings, traffic speeds, congestion patterns, anomalies, or general overview ("tell me about taxi data", "traffic in Manhattan", "tell me about other things", "what else").
+- COMBINED_QUERY: Questions requiring multiple tools.
+- CASUAL_GREETING: Conversational greetings, "hello", "hi", "how are you", "what can you do", "help".
+- UNSUPPORTED_QUERY: Only strictly unrelated non-mobility questions (e.g. recipes, sports, poetry). If user asks conversational prompts ("nk", "ok tell", "more", "tell me about other things"), classify as RAG_KNOWLEDGE or CASUAL_GREETING.
 
 PARAMETERS TO EXTRACT (if present):
 - origin_zone: The pickup location
@@ -47,6 +52,13 @@ PARAMETERS TO EXTRACT (if present):
 - date: Mentioned date (e.g. "tomorrow", "2026-09-12")
 - time: Mentioned time (e.g. "8 AM", "evening rush")
 - sql_query: If intent=DATA_QUERY or COMBINED_QUERY, provide the exact safe DuckDB SQL query. Only SELECT statements are allowed. Add LIMIT 500.
+
+SAMPLE & DEFAULT PREDICTIONS:
+If the user asks to predict without specifying locations (e.g. "can you predict", "predict something", "use some sample ones", "give an example", "get from our prediction data"), supply default sample parameters:
+- origin_zone: "JFK Airport"
+- dest_zone: "Times Square"
+- time: "18:00"
+- needs_clarification: false
 
 IMPORTANT: Output your response as a valid JSON object matching this schema EXACTLY:
 {{
@@ -69,32 +81,75 @@ DURATION_PREDICTION requires origin_zone, dest_zone.
 DEMAND_FORECAST requires target_zone, date, time.
 ZONE_CLUSTERING requires target_zone.
 
-If a required parameter is missing, set needs_clarification=true and list it in missing_parameters.
+If a required parameter is missing AND the user has not asked for samples/examples, set needs_clarification=true and list it in missing_parameters.
+If needs_clarification is true, missing_parameters MUST NOT be empty.
 """
 
-def extract_intent(user_message: str) -> dict:
-    """Call Groq to extract intent. Returns structured dict or error."""
+def extract_intent(user_message: str, history: list[dict] = None) -> dict:
+    """Call Groq to extract intent with optional multi-turn conversation history."""
+    # Fast heuristic check for casual greetings or broad filler
+    clean_msg = user_message.strip().lower()
+    if clean_msg in ["hi", "hello", "hey", "help", "what can you do", "nk", "ok", "ok tell", "tell me"]:
+        return {
+            "intent": "CASUAL_GREETING",
+            "parameters": {
+                "origin_zone": None, "dest_zone": None, "target_zone": None,
+                "date": None, "time": None, "sql_query": None
+            },
+            "missing_parameters": [],
+            "needs_clarification": False,
+            "success": True
+        }
+
+    # Heuristic check for sample prediction request
+    if any(phrase in clean_msg for phrase in ["sample", "example", "default", "prediction data", "cant u predict", "can you predict"]):
+        if not ("who" in clean_msg or "how does" in clean_msg or "what is" in clean_msg):
+            return {
+                "intent": "FARE_PREDICTION",
+                "parameters": {
+                    "origin_zone": "JFK Airport",
+                    "dest_zone": "Times Square",
+                    "target_zone": None,
+                    "date": "2026-09-12",
+                    "time": "18:00",
+                    "sql_query": None
+                },
+                "missing_parameters": [],
+                "needs_clarification": False,
+                "success": True
+            }
+
     if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
         return {"success": False, "error": "GROQ_API_KEY is not set."}
 
-    client = Groq(api_key=GROQ_API_KEY)
-    # Try the selected model first, then fall through the preference list
+    client = Groq(api_key=GROQ_API_KEY, max_retries=0)
     model_order = [GROQ_MODEL] + [m for m in GROQ_MODEL_PREFERENCE if m != GROQ_MODEL]
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if history:
+        for msg in history[-4:]:
+            role = "assistant" if msg.get("role") == "assistant" else "user"
+            content = msg.get("content", "")
+            if content:
+                messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": user_message})
 
     for model in model_order:
         try:
             response = client.chat.completions.create(
                 model=model,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_message}
-                ],
+                messages=messages,
                 response_format={"type": "json_object"},
                 temperature=0.0
             )
             content = response.choices[0].message.content
             result = json.loads(content)
             result["success"] = True
+            
+            # Guard against needs_clarification=True with empty missing_parameters
+            if result.get("needs_clarification") and not result.get("missing_parameters"):
+                result["needs_clarification"] = False
+                
             if model != GROQ_MODEL:
                 logger.warning(f"Intent extraction used fallback model: {model}")
             return result
