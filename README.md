@@ -37,22 +37,30 @@ In real-world dispatch systems, the actual meter distance `distance_miles` is un
 #### Model Benchmarking & Selection (100k Sample)
 Evaluated **Ridge Regression**, **Random Forest**, and **HistGradientBoostingRegressor (HGBR)** with `TargetEncoder` for high-cardinality zones. HGBR achieved superior accuracy and training scalability, with hyperparameter tuning via `RandomizedSearchCV`.
 
-#### Track 2.1: Upfront Fare Prediction Model
+#### Track 2.1: Upfront Fare Prediction Model (Dhanus Architecture)
 - **Model**: `HistGradientBoostingRegressor` (max_iter=300, learning_rate=0.1, max_leaf_nodes=255)
+- **Feature Engineering**: `estimated_route_distance` (leakage-free historical median O-D distance proxy derived strictly from training data), categorical TargetEncoding for origin/destination zones.
 - **Validation**: RMSE = \$8.50 | MAE = \$4.55 | $R^2$ = 0.7462
 - **Test Set**: **RMSE = \$8.29 | MAE = \$4.41 | $R^2$ = 0.7653**
 
-#### Track 2.2: On-Time Arrival Estimator (Trip Duration Model)
-- **Model**: `HistGradientBoostingRegressor` (predicting `trip_duration_min`)
-- **Validation**: RMSE = 7.20 mins | MAE = 4.28 mins | $R^2$ = 0.7286
-- **Test Set**: **RMSE = 7.09 mins | MAE = 4.03 mins | $R^2$ = 0.7585**
+#### Track 2.2: On-Time Arrival Estimator (Shehan Advanced Corridor Architecture)
+- **Model**: `HistGradientBoostingRegressor` with exact OD corridor lookups + dynamic network congestion state
+- **Key Features**:
+  1. `hist_od_duration_prior`: Historical median trip duration for exact $(O, D, \text{period})$ triplets across 48M rides (support $\ge 15$).
+  2. `hist_od_pace_prior`: Historical congestion pace in min/mile for exact corridor triplets.
+  3. `hourly_network_load`: Dynamic count of concurrent active trips across NYC in that departure hour.
+- **Performance Progression**:
+  - Baseline (Standard Features): $R^2 = 0.8049$, MAE = 3.73 mins
+  - + Distance & Anomaly Cleaning: $R^2 = 0.8392$, MAE = 3.39 mins
+  - **+ Historical Corridor Prior & Dynamic Load: $R^2 = 0.8686$, MAE = 3.10 mins ($+6.4\%$ lift in variance explained)**
 
-#### Track 3.1: Fleet Dispatch Demand Forecasting
+#### Track 3.1: Fleet Dispatch Demand Forecasting (Dhanus Architecture)
 - Aggregated training volume by month, day-of-week, hour, and origin zone.
 - Forecasts neighborhood pickup demand for proactive driver dispatch.
+- **Test Set**: $R^2 \approx 0.863$
 
 #### Track 3.2: Spatial-Temporal Clustering (Hotspots)
-- K-Means clustering ($k=4$) on 24-hour diurnal zone demand profiles, categorizing 258 taxi zones into behavioral patterns (e.g., Morning Commuter Hubs vs. Evening Entertainment Districts).
+- K-Means clustering ($k=4$) on 24-hour diurnal zone demand profiles, categorizing 258 taxi zones into distinct behavioral archetypes (Morning Commuter Hubs, Daytime Commercial Districts, Evening Dining/Entertainment Hubs, Quiet Residential/Peripheral Zones).
 
 ---
 
