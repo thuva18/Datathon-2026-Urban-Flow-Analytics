@@ -200,27 +200,16 @@ def get_kpi_metrics():
         AVG(charge_total) as avg_fare
     FROM read_parquet('{PARQUET_FILE}')
     """
-    try:
-        df = duckdb.query(query).df()
-        return {
-            'total_trips': f"{df['total_trips'][0]:,}",
-            'total_revenue': f"${df['total_revenue'][0]/1e6:.2f}M",
-            'avg_fare': f"${df['avg_fare'][0]:.2f}",
-            'median_dur': "11.23 mins",
-            'median_dist': "1.63 miles",
-            'active_fleet': "15,420 cabs",
-            'driver_idle': "18.4%"
-        }
-    except Exception as e:
-        return {
-            'total_trips': "48,601,782",
-            'total_revenue': "$1,353.66M",
-            'avg_fare': "$27.85",
-            'median_dur': "11.23 mins",
-            'median_dist': "1.63 miles",
-            'active_fleet': "15,420 cabs",
-            'driver_idle': "18.4%"
-        }
+    df = duckdb.query(query).df()
+    return {
+        'total_trips': f"{df['total_trips'][0]:,}",
+        'total_revenue': f"${df['total_revenue'][0]/1e6:.2f}M",
+        'avg_fare': f"${df['avg_fare'][0]:.2f}",
+        'median_dur': "11.23 mins",
+        'median_dist': "1.63 miles",
+        'active_fleet': "15,420 cabs",
+        'driver_idle': "18.4%"
+    }
 
 @st.cache_data
 def get_hourly_demand():
@@ -803,7 +792,18 @@ with tab4:
         with chat_container:
             with st.chat_message("assistant"):
                 with st.spinner("Analyzing query & executing models..."):
-                    result = process_message(incoming_query, conversation_history=active_messages)
+                    filtered_history = []
+                    for h_msg in active_messages:
+                        if h_msg["role"] == "assistant":
+                            filtered_history.append({
+                                "role": "assistant",
+                                "content": h_msg["content"],
+                                "metadata": {"tool_used": h_msg.get("metadata", {}).get("tool_used")}
+                            })
+                        else:
+                            filtered_history.append(h_msg)
+
+                    result = process_message(incoming_query, conversation_history=filtered_history)
                     answer = result.get("answer", "Error generating response.")
                     intent = result.get("intent")
                     tool_used = result.get("tool_used")

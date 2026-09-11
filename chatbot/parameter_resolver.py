@@ -9,8 +9,7 @@ import pandas as pd
 
 from chatbot.config import ZONES_FILE, DATASET_START, DATASET_END
 
-# System date (as requested by user constraints for resolving "tomorrow", etc.)
-SYSTEM_DATE = datetime.date(2026, 9, 12)
+# We'll compute the system date dynamically inside resolve_date
 
 _zone_names_cache = []
 
@@ -63,13 +62,14 @@ def resolve_date(date_str: str) -> str | None:
         return None
         
     d = date_str.lower().strip()
+    system_date = datetime.date.today()
     
     if d == "today":
-        return SYSTEM_DATE.strftime("%Y-%m-%d")
+        return system_date.strftime("%Y-%m-%d")
     if d == "tomorrow":
-        return (SYSTEM_DATE + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        return (system_date + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     if d == "yesterday":
-        return (SYSTEM_DATE - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        return (system_date - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         
     # Check if format is YYYY-MM-DD
     if re.match(r'^\d{4}-\d{2}-\d{2}$', d):

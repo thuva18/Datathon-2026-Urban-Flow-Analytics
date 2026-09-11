@@ -9,6 +9,7 @@ retrieval, falling back to keyword search if numpy is unavailable.
 Documents are chunked and indexed on first call, then cached in memory.
 """
 import re
+import json
 import logging
 from pathlib import Path
 
@@ -90,10 +91,22 @@ def _chunk_text(text: str, source: str, chunk_size: int = 750, overlap: int = 15
 
 # ─── Index initialisation ─────────────────────────────────────────────────────
 
+_CACHE_FILE = Path(__file__).parent / "_chunks_cache.json"
+
 def _initialize():
     global _chunks, _initialized
     if _initialized:
         return
+        
+    if _CACHE_FILE.exists():
+        try:
+            with open(_CACHE_FILE, "r", encoding="utf-8") as f:
+                _chunks = json.load(f)
+            logger.info("RAG index loaded from cache: %d chunks.", len(_chunks))
+            _initialized = True
+            return
+        except Exception as e:
+            logger.warning("Could not load chunks from cache: %s", e)
 
     readme_text = _extract_readme()
     dict_text   = _extract_pdf(DATA_DICT_FILE)
@@ -103,6 +116,12 @@ def _initialize():
     _chunks += _chunk_text(dict_text, "Data_Dictionary.pdf")
     if report_text:
         _chunks += _chunk_text(report_text, "Gravitons_Technical_Report.pdf")
+        
+    try:
+        with open(_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(_chunks, f)
+    except Exception as e:
+        logger.warning("Could not save chunks to cache: %s", e)
 
     logger.info("RAG index ready: %d chunks from documentation.", len(_chunks))
     _initialized = True

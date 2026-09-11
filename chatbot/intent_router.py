@@ -3,6 +3,7 @@ chatbot/intent_router.py
 Routes extracted intents to the appropriate backend service.
 """
 import logging
+import datetime
 from chatbot import model_services
 from chatbot import sql_service
 from chatbot import rag_service
@@ -39,7 +40,7 @@ def route(intent_data: dict, original_query: str) -> dict:
         hour = parameter_resolver.resolve_hour(params.get("time")) or 18
         
         # Default to today if date isn't specified
-        date_str = parameter_resolver.resolve_date(params.get("date")) or "2026-09-12"
+        date_str = parameter_resolver.resolve_date(params.get("date")) or datetime.date.today().strftime("%Y-%m-%d")
         dow = parameter_resolver.get_dow(date_str) or 5
         month = parameter_resolver.get_month(date_str) or 9
         
@@ -55,7 +56,7 @@ def route(intent_data: dict, original_query: str) -> dict:
         oz = parameter_resolver.resolve_zone(oz_raw) or "JFK Airport"
         dz = parameter_resolver.resolve_zone(dz_raw) or "Times Sq/Theatre District"
         hour = parameter_resolver.resolve_hour(params.get("time")) or 18
-        date_str = parameter_resolver.resolve_date(params.get("date")) or "2026-09-12"
+        date_str = parameter_resolver.resolve_date(params.get("date")) or datetime.date.today().strftime("%Y-%m-%d")
         dow = parameter_resolver.get_dow(date_str) or 5
         
         result = model_services.predict_duration(oz, dz, hour, dow)
@@ -68,7 +69,7 @@ def route(intent_data: dict, original_query: str) -> dict:
         tz_raw = params.get("target_zone") or "Midtown Center"
         tz = parameter_resolver.resolve_zone(tz_raw) or "Midtown Center"
         hour = parameter_resolver.resolve_hour(params.get("time")) or 8
-        date_str = parameter_resolver.resolve_date(params.get("date")) or "2026-09-13" # tomorrow normally
+        date_str = parameter_resolver.resolve_date(params.get("date")) or (datetime.date.today() + datetime.timedelta(days=1)).strftime("%Y-%m-%d") # tomorrow normally
         
         result = model_services.forecast_demand(tz, date_str, hour)
         result["tool_used"] = "Demand Model"
@@ -94,18 +95,24 @@ def route(intent_data: dict, original_query: str) -> dict:
         
     # ─── COMBINED_QUERY ────────────────────────────────────────────────────
     elif intent == "COMBINED_QUERY":
-        # Simplified handling: Just run the SQL part if present, and RAG together
         sql = params.get("sql_query")
+        rag_result = rag_service.retrieve_knowledge(original_query)
+        
         if sql:
-            result = sql_service.execute_safe_query(sql)
-            result["tool_used"] = "SQL Analytics (Combined)"
-            result["intent"] = intent
-            return result
+            sql_result = sql_service.execute_safe_query(sql)
+            return {
+                "success": sql_result.get("success", False) or rag_result.get("success", False),
+                "intent": intent,
+                "tool_used": "SQL + RAG (Combined)",
+                "data": sql_result.get("data"),
+                "sql_used": sql_result.get("sql_used"),
+                "rag_chunks": rag_result.get("chunks"),
+                "sql_error": sql_result.get("error"),
+            }
         else:
-            result = rag_service.retrieve_knowledge(original_query)
-            result["tool_used"] = "Documentation RAG (Combined)"
-            result["intent"] = "RAG_KNOWLEDGE"
-            return result
+            rag_result["tool_used"] = "Documentation RAG (Combined)"
+            rag_result["intent"] = "RAG_KNOWLEDGE"
+            return rag_result
             
     # ─── CASUAL_GREETING ───────────────────────────────────────────────────
     elif intent == "CASUAL_GREETING":

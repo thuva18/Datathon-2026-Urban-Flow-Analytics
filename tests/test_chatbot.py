@@ -62,10 +62,11 @@ def test_time_resolution():
     assert parameter_resolver.resolve_hour("evening rush") == 17
 
 def test_date_resolution():
-    # Relative checks against fixed SYSTEM_DATE = 2026-09-12
-    assert parameter_resolver.resolve_date("yesterday") == "2026-09-11"
-    assert parameter_resolver.resolve_date("today") == "2026-09-12"
-    assert parameter_resolver.resolve_date("tomorrow") == "2026-09-13"
+    import datetime
+    today = datetime.date.today()
+    assert parameter_resolver.resolve_date("yesterday") == (today - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    assert parameter_resolver.resolve_date("today") == today.strftime("%Y-%m-%d")
+    assert parameter_resolver.resolve_date("tomorrow") == (today + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 
 # ─── 3. Intent Router Tests ────────────────────────────────────────────────
 
@@ -128,3 +129,25 @@ def test_router_sample_fare_fallback(mock_predict):
     assert res["success"]
     assert res["tool_used"] == "Fare Model"
     mock_predict.assert_called_once()
+
+# ─── 4. Model Services Tests ──────────────────────────────────────────────────
+
+@patch("chatbot.model_services._get_fare_model")
+@patch("chatbot.model_services._get_od_stats")
+@patch("chatbot.model_services._zone_row")
+def test_predict_fare_success(mock_zone, mock_stats, mock_model):
+    import pandas as pd
+    mock_zone.side_effect = [
+        pd.Series({"loc_id": 132, "borough_name": "Queens", "zone_name": "JFK Airport"}),
+        pd.Series({"loc_id": 230, "borough_name": "Manhattan", "zone_name": "Times Sq"})
+    ]
+    mock_stats.return_value = (15.5, 45.0, 3.0)
+    
+    mock_instance = MagicMock()
+    mock_instance.predict.return_value = [55.4]
+    mock_model.return_value = mock_instance
+    
+    res = model_services.predict_fare("JFK Airport", "Times Sq", 18, 5, 9)
+    assert res["success"]
+    assert res["predicted_fare"] == 55.40
+    mock_instance.predict.assert_called_once()

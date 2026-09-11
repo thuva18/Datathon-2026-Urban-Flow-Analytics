@@ -71,8 +71,8 @@ def validate_sql(sql: str) -> tuple[bool, str]:
 
     # Strip quoted string literals (single or double quoted) before keyword scan
     # so file paths like 'Datathon - Copy\...' don't false-positive on 'copy'
-    sql_no_strings = re.sub(r"'[^']*'", "''", sql_cleaned)   # single-quoted
-    sql_no_strings = re.sub(r'"[^"]*"', '""', sql_no_strings)  # double-quoted
+    sql_no_strings = re.sub(r"'(?:''|[^'])*'", "''", sql_cleaned)   # single-quoted
+    sql_no_strings = re.sub(r'"(?:""|[^"])*"', '""', sql_no_strings)  # double-quoted
 
     for keyword in SQL_BLOCKLIST:
         pattern = r'\b' + re.escape(keyword) + r'\b'
@@ -135,12 +135,10 @@ def execute_safe_query(sql: str) -> dict:
     # 2. Enforce limit
     safe_sql = enforce_limit(sql)
 
-    # 3. Execute (DuckDB in-process, read-only)
+    # 3. Execute (using DuckDB default global connection)
     try:
-        con = duckdb.connect(database=":memory:", read_only=False)
         # DuckDB can read Parquet without a persistent DB
-        df = con.execute(safe_sql).df()
-        con.close()
+        df = duckdb.query(safe_sql).df()
 
         rows = df.to_dict(orient="records")
         logger.info("SQL executed successfully: %d rows returned.", len(rows))

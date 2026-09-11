@@ -319,17 +319,11 @@ def forecast_demand(
             "lag_48h":        lag_48h,
             "lag_72h":        lag_72h,
             "lag_168h":       lag_168h,
-            "rolling_mean_24h": rolling_mean,
+            "rolling_24h":    rolling_mean,
         }])
 
         model = _get_demand_model()
-        # Try to predict — model may have different feature names; handle gracefully
-        try:
-            predicted = float(model.predict(features)[0])
-        except Exception:
-            # Try column name variants from notebook
-            features.columns = ["lag_24h", "lag_48h", "lag_72h", "lag_168h", "rolling_24h"]
-            predicted = float(model.predict(features)[0])
+        predicted = float(model.predict(features)[0])
 
         predicted = max(0, round(predicted))
 
@@ -344,7 +338,7 @@ def forecast_demand(
                 "lag_48h":        lag_48h,
                 "lag_72h":        lag_72h,
                 "lag_168h":       lag_168h,
-                "rolling_mean_24h": rolling_mean,
+                "rolling_24h":    rolling_mean,
             },
         }
     except ValueError as e:
