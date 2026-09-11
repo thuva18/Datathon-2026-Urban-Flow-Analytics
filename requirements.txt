@@ -1,21 +1,25 @@
-# Core numerical and data processing
+# Core Numerical & Vectorized Data Processing
 duckdb>=0.9.0
 pyarrow>=14.0.0
 pandas>=2.0.0
 numpy>=1.24.0
 
-# Machine learning & scientific computing
+# Machine Learning & Scientific Computing
 scikit-learn>=1.3.0
 scipy>=1.10.0
 joblib>=1.3.0
 
-# Visualization
+# Visualization & Reporting
 matplotlib>=3.7.0
 seaborn>=0.12.0
 pillow>=10.0.0
-
-# Notebook execution & reporting
-nbformat>=5.9.0
-nbclient>=0.8.0
 reportlab>=4.0.0
 pdfplumber>=0.10.0
+plotly>=5.0.0
+
+# Interactive Dashboard & AI Assistant (Bonus Tracks 5 & 6)
+streamlit>=1.20.0
+groq>=0.9.0
+python-dotenv>=1.0.0
+rapidfuzz>=3.0.0
+pytest>=7.0.0

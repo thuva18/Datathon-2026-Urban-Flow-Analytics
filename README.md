@@ -2,9 +2,62 @@
 ### **Team: Gravitons**
 
 ## Overview
-This repository contains the complete end-to-end data pipeline, anomaly quantification framework, exploratory data analysis (EDA), predictive machine learning modeling, and spatial-temporal clustering for **Round 1 of the Urban Flow Analytics Data Challenge** (Datathon 2026) developed by **Team Gravitons**.
+This repository contains the complete end-to-end data pipeline, anomaly quantification framework, exploratory data analysis (EDA), predictive machine learning modeling, spatial-temporal clustering, and an interactive **Streamlit AI Mobility Dashboard & Conversational Assistant** for **Round 1 of the Urban Flow Analytics Data Challenge** (Datathon 2026) developed by **Team Gravitons**.
 
 The solution unifies high-volume urban taxi trip records from NYC across a full 12-month period (April 2025 – March 2026) totaling **48,601,782 rides** joined with spatial taxi zone metadata across 265 discrete geographical zones.
+
+---
+
+## 🚀 Quick Start & Installation
+
+### 1. Prerequisites & Environment Setup
+Ensure you have Python 3.10+ installed. Clone the repository and install all dependencies:
+```bash
+git clone https://github.com/thuva18/Datathon-2026-Urban-Flow-Analytics.git
+cd Datathon_2026
+
+# Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### 2. Configure API Keys
+To enable the AI Mobility Assistant (Bonus Track 5), configure your Groq API key:
+```bash
+cp .env.example .env
+# Edit .env and add your key:
+# GROQ_API_KEY=gsk_your_groq_api_key_here
+```
+
+### 3. Launch the Interactive Dashboard
+Launch the unified Streamlit application featuring live inference, executive KPIs, and conversational AI:
+```bash
+streamlit run app.py
+```
+
+### 4. Run Automated Test Suite
+Verify that the chatbot router, SQL sanitization guardrails, and parameter resolvers are working:
+```bash
+pytest tests/test_chatbot.py
+```
+
+---
+
+## 🖥️ Streamlit Executive Dashboard & AI Mobility Assistant (`app.py`)
+
+The application provides an enterprise-grade analytics interface tailored for dispatch operators, fleet managers, and city planners:
+
+1. **📊 Executive KPI Dashboard**: Real-time aggregation of citywide ride volume, average fares, transit duration, passenger distributions, and anomaly isolation metrics across 48.6M records.
+2. **🔮 Live What-If Simulator & Model Inference**: Interactive sliders to estimate upfront fares and travel durations in real-time between any origin-destination zone pair in NYC using our trained serialized models.
+3. **🗺️ Strategic Dispatch & Demand Forecasting**: Visualizes forward 72-hour demand projections across the Top 80 NYC transit hubs to eliminate deadheading and curb passenger wait times.
+4. **🤖 Conversational AI Mobility Engine (Track 5)**:
+   - **RAG Architecture**: Answers domain questions grounded in the official Data Dictionary and Technical Report.
+   - **Safe Natural Language to SQL**: Converts questions into read-only DuckDB SQL queries over local Parquet/CSV data with strict AST/regex blocklists preventing mutation.
+   - **Direct Model Invocation**: Automatically detects fare and duration prediction intents and executes underlying scikit-learn models.
+   - **LLM Reasoning**: Powered by Groq's high-speed Llama-3.3-70B model with deterministic fallback logic.
 
 ---
 
@@ -38,13 +91,13 @@ In real-world dispatch systems, the actual meter distance `distance_miles` is un
 #### Model Benchmarking & Selection (100k Sample)
 Evaluated **Ridge Regression**, **Random Forest**, and **HistGradientBoostingRegressor (HGBR)** with `TargetEncoder` for high-cardinality zones. HGBR achieved superior accuracy and training scalability, with hyperparameter tuning via `RandomizedSearchCV`.
 
-#### Track 2.1: Upfront Fare Prediction Model (Dhanus Architecture)
+#### Track 2.1: Upfront Fare Prediction Model
 - **Model**: `HistGradientBoostingRegressor` (max_iter=300, learning_rate=0.1, max_leaf_nodes=255)
 - **Feature Engineering**: `estimated_route_distance` (leakage-free historical median O-D distance proxy derived strictly from training data), categorical TargetEncoding for origin/destination zones.
 - **Validation**: RMSE = \$8.50 | MAE = \$4.55 | $R^2$ = 0.7462
 - **Test Set**: **RMSE = \$8.29 | MAE = \$4.41 | $R^2$ = 0.7653**
 
-#### Track 2.2: On-Time Arrival Estimator (Shehan Advanced Corridor Architecture)
+#### Track 2.2: On-Time Arrival Estimator (Advanced Corridor Architecture)
 - **Model**: `HistGradientBoostingRegressor` with exact OD corridor lookups + dynamic network congestion state
 - **Key Features**:
   1. `hist_od_duration_prior`: Historical median trip duration for exact $(O, D, \text{period})$ triplets across 48M rides (support $\ge 15$).
@@ -64,11 +117,15 @@ Evaluated **Ridge Regression**, **Random Forest**, and **HistGradientBoostingReg
 - **Visualization Artifact**: [`eda_outputs/08_task_3_1_demand_forecast_72h.png`](eda_outputs/08_task_3_1_demand_forecast_72h.png) compares actual rider demand vs 72-hour forecast curves across JFK Airport, Midtown Center, Penn Station, and Upper East Side.
 
 #### Track 3.2: Spatial-Temporal Clustering (Hotspots)
-- K-Means clustering ($k=4$) on 24-hour diurnal zone demand profiles, categorizing 258 taxi zones into distinct behavioral archetypes (Morning Commuter Hubs, Daytime Commercial Districts, Evening Dining/Entertainment Hubs, Quiet Residential/Peripheral Zones).
+- K-Means clustering ($k=4$) on 24-hour diurnal zone demand profiles, categorizing 258 taxi zones into distinct behavioral archetypes:
+  - Cluster 0: Evening / Nightlife Entertainment Hubs
+  - Cluster 1: Daytime Commercial & Mixed-Use Corridors
+  - Cluster 2: Morning Rush Commuter Residential Gateways
+  - Cluster 3: Low-Density Outer Borough Transit Periphery
 
 ---
 
-## Serialized Models (Submission Requirement)
+## 📦 Serialized Models
 
 The trained models are serialized in `.pkl` format under `models/`:
 - `models/fare_prediction_model.pkl` (4.7 MB) - Upfront Fare Prediction
@@ -78,13 +135,28 @@ The trained models are serialized in `.pkl` format under `models/`:
 
 ---
 
-## Repository Structure
+## 📂 Repository Structure
 
 ```
-├── Urban_Flow_Analytics_Data_Merge_and_EDA.ipynb  # Primary master executed notebook (EDA + Models)
+├── Urban_Flow_Analytics_Data_Merge_and_EDA.ipynb  # Master executed notebook (Full EDA + Models)
 ├── code/
-│   ├── Gravitons_FinalNotebook.ipynb             # Official team submission notebook (Team Gravitons)
+│   ├── Gravitons_FinalNotebook.ipynb             # Official team submission notebook
 │   └── TeamName_FinalNotebook.ipynb              # Competition template submission notebook
+├── app.py                                        # Interactive Streamlit Dashboard & Chatbot UI
+├── chatbot/                                      # Conversational AI & NLP Query Engine
+│   ├── __init__.py
+│   ├── config.py                                 # Chatbot configuration & constants
+│   ├── intent_extractor.py                       # LLM-based intent identification
+│   ├── intent_router.py                          # Rule & LLM fallback intent routing
+│   ├── model_services.py                         # Direct ML inference bridge
+│   ├── orchestrator.py                           # Central dialog orchestrator
+│   ├── parameter_resolver.py                     # Fuzzy entity matching & datetime parsing
+│   ├── rag_service.py                            # Context retrieval from documentation
+│   ├── response_generator.py                     # Groq LLM natural language synthesizer
+│   └── sql_service.py                            # Safe, read-only DuckDB SQL executor
+├── tests/                                        # Automated test suite
+│   ├── __init__.py
+│   └── test_chatbot.py                           # 10 unit tests for routing & SQL safety
 ├── models/                                       # Serialized model artifacts (.pkl format)
 │   ├── fare_prediction_model.pkl
 │   ├── duration_prediction_model.pkl
@@ -97,10 +169,17 @@ The trained models are serialized in `.pkl` format under `models/`:
 │   ├── 04_borough_flow_matrix.png
 │   ├── 05_pricing_and_payment_breakdown.png
 │   ├── 06_traffic_speed_deceleration.png
-│   └── 07_feature_correlation_matrix.png
+│   ├── 07_feature_correlation_matrix.png
+│   └── 08_task_3_1_demand_forecast_72h.png
+├── Gravitons_Technical_Report.pdf                # Complete, publication-ready PDF submission
+├── architecture_diagram.png                      # High-resolution system pipeline architecture
+├── generate_report.py                            # Script generating the technical PDF report
+├── generate_polished_diagram.py                  # Script generating the system architecture diagram
 ├── Urban_Flow_Analytics_Zone_Dataset.csv          # 265 taxi zones metadata
 ├── Data_Dictionary.pdf                           # Competition data dictionary
 ├── Round 1 - Urban Flow Analytics...pdf          # Official problem statement
-├── make_nb.py                                    # Automated pipeline script
-└── .gitignore                                    # Excludes heavy raw datasets (>100MB)
+├── requirements.txt                              # Complete Python package dependencies
+├── conftest.py                                   # Pytest configuration
+├── .env.example                                  # Template for environment configuration
+└── .gitignore                                    # Excludes secrets, caches, and raw datasets
 ```
