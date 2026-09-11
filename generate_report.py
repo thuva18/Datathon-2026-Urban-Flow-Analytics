@@ -1,9 +1,9 @@
 """
-build_full_report.py
-====================
-SLIIT Codefest Datathon 2026 — Urban Flow Analytics
-Team Gravitons: Comprehensive Technical Report & System Architecture Specification
-Redesigned from scratch with executive styling, crisp typography, and publication-quality layouts.
+generate_report.py
+==================
+SLIIT Codefest Datathon 2026 — Urban Flow Analytics Data Challenge
+Team Gravitons: Comprehensive Technical Report & Solution Architecture
+Publication-grade document engineered for maximum visual clarity, rigorous statistical depth, and executive aesthetic appeal.
 """
 
 import os, io, sys
@@ -29,7 +29,7 @@ OUTPUT_PDF = os.path.join(BASE_DIR, "Gravitons_Technical_Report.pdf")
 W, H = A4
 MARGIN = 1.8 * cm
 
-# ── Color Palette ─────────────────────────────────────────────────────────────
+# ── Elegant Executive Color Palette ───────────────────────────────────────────
 NAVY       = colors.HexColor("#0F172A")  # Slate 900
 DARK_BLUE  = colors.HexColor("#1E3A8A")  # Blue 900
 BRAND_BLUE = colors.HexColor("#2563EB")  # Blue 600
@@ -50,82 +50,19 @@ styles = getSampleStyleSheet()
 def make_style(name, **kwargs):
     return ParagraphStyle(name, **kwargs)
 
-H1_Style = make_style(
-    'H1_Custom',
-    fontName='Helvetica-Bold',
-    fontSize=14,
-    leading=18,
-    textColor=NAVY,
-    spaceBefore=10,
-    spaceAfter=6
-)
+H1_Style = make_style('H1_Custom', fontName='Helvetica-Bold', fontSize=13.5, leading=17, textColor=NAVY, spaceBefore=9, spaceAfter=5)
+H2_Style = make_style('H2_Custom', fontName='Helvetica-Bold', fontSize=10.2, leading=13.5, textColor=DARK_BLUE, spaceBefore=7, spaceAfter=3)
+H3_Style = make_style('H3_Custom', fontName='Helvetica-Bold', fontSize=8.8, leading=11.5, textColor=TEAL, spaceBefore=4, spaceAfter=2)
+Body_Style = make_style('Body_Custom', fontName='Helvetica', fontSize=8.4, leading=12.2, textColor=TEXT_DARK, alignment=TA_JUSTIFY, spaceBefore=2, spaceAfter=2)
+Bullet_Style = make_style('Bullet_Custom', fontName='Helvetica', fontSize=8.4, leading=11.8, textColor=TEXT_DARK, leftIndent=11, spaceBefore=1.5, spaceAfter=1.5)
+Caption_Style = make_style('Caption_Custom', fontName='Helvetica-Oblique', fontSize=7.4, leading=9.8, textColor=TEXT_MUTED, alignment=TA_CENTER, spaceBefore=3, spaceAfter=5)
+Mono_Style = make_style('Mono_Custom', fontName='Courier', fontSize=7.4, leading=9.4, textColor=DARK_BLUE)
 
-H2_Style = make_style(
-    'H2_Custom',
-    fontName='Helvetica-Bold',
-    fontSize=10.5,
-    leading=14,
-    textColor=DARK_BLUE,
-    spaceBefore=8,
-    spaceAfter=3
-)
-
-H3_Style = make_style(
-    'H3_Custom',
-    fontName='Helvetica-Bold',
-    fontSize=9,
-    leading=12,
-    textColor=TEAL,
-    spaceBefore=5,
-    spaceAfter=2
-)
-
-Body_Style = make_style(
-    'Body_Custom',
-    fontName='Helvetica',
-    fontSize=8.5,
-    leading=12.5,
-    textColor=TEXT_DARK,
-    alignment=TA_JUSTIFY,
-    spaceBefore=2,
-    spaceAfter=2
-)
-
-Bullet_Style = make_style(
-    'Bullet_Custom',
-    fontName='Helvetica',
-    fontSize=8.5,
-    leading=12,
-    textColor=TEXT_DARK,
-    leftIndent=12,
-    spaceBefore=1.5,
-    spaceAfter=1.5
-)
-
-Caption_Style = make_style(
-    'Caption_Custom',
-    fontName='Helvetica-Oblique',
-    fontSize=7.5,
-    leading=10,
-    textColor=TEXT_MUTED,
-    alignment=TA_CENTER,
-    spaceBefore=3,
-    spaceAfter=6
-)
-
-Mono_Style = make_style(
-    'Mono_Custom',
-    fontName='Courier',
-    fontSize=7.5,
-    leading=9.5,
-    textColor=DARK_BLUE
-)
-
-TH_Style = make_style('TH_Custom', fontName='Helvetica-Bold', fontSize=8, leading=10, textColor=WHITE, alignment=TA_CENTER)
-TC_Style = make_style('TC_Custom', fontName='Helvetica', fontSize=7.8, leading=10, textColor=TEXT_DARK, alignment=TA_CENTER)
-TCL_Style = make_style('TCL_Custom', fontName='Helvetica', fontSize=7.8, leading=10, textColor=TEXT_DARK, alignment=TA_LEFT)
-TCB_Style = make_style('TCB_Custom', fontName='Helvetica-Bold', fontSize=7.8, leading=10, textColor=TEXT_DARK, alignment=TA_CENTER)
-TCLB_Style = make_style('TCLB_Custom', fontName='Helvetica-Bold', fontSize=7.8, leading=10, textColor=TEXT_DARK, alignment=TA_LEFT)
+TH_Style = make_style('TH_Custom', fontName='Helvetica-Bold', fontSize=7.8, leading=9.8, textColor=WHITE, alignment=TA_CENTER)
+TC_Style = make_style('TC_Custom', fontName='Helvetica', fontSize=7.6, leading=9.6, textColor=TEXT_DARK, alignment=TA_CENTER)
+TCL_Style = make_style('TCL_Custom', fontName='Helvetica', fontSize=7.6, leading=9.6, textColor=TEXT_DARK, alignment=TA_LEFT)
+TCB_Style = make_style('TCB_Custom', fontName='Helvetica-Bold', fontSize=7.6, leading=9.6, textColor=TEXT_DARK, alignment=TA_CENTER)
+TCLB_Style = make_style('TCLB_Custom', fontName='Helvetica-Bold', fontSize=7.6, leading=9.6, textColor=TEXT_DARK, alignment=TA_LEFT)
 
 def P(text, style_name='Body'):
     style_map = {
@@ -140,23 +77,23 @@ def SP(height=4):
     return Spacer(1, height)
 
 def Divider():
-    return HRFlowable(width="100%", thickness=0.6, color=BORDER, spaceAfter=4, spaceBefore=4)
+    return HRFlowable(width="100%", thickness=0.5, color=BORDER, spaceAfter=4, spaceBefore=4)
 
-# ── Section Header Box ────────────────────────────────────────────────────────
+# ── Header Ribbon Banner ──────────────────────────────────────────────────────
 def make_section_banner(num_str, title_str):
     content = [
         [
-            Paragraph(f'<font color="#D97706"><b>{num_str}</b></font>  <font color="#FFFFFF"><b>{title_str.upper()}</b></font>',
-                      make_style('SecTitle', fontName='Helvetica-Bold', fontSize=10.5, leading=13, textColor=WHITE))
+            Paragraph(f'<font color="#F59E0B"><b>{num_str}</b></font>  <font color="#FFFFFF"><b>{title_str.upper()}</b></font>',
+                      make_style('SecTitle', fontName='Helvetica-Bold', fontSize=10, leading=12.5, textColor=WHITE))
         ]
     ]
     t = Table(content, colWidths=[W - 2 * MARGIN])
     t.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), NAVY),
-        ('LEFTPADDING', (0,0), (-1,-1), 10),
+        ('LEFTPADDING', (0,0), (-1,-1), 9),
         ('RIGHTPADDING', (0,0), (-1,-1), 8),
-        ('TOPPADDING', (0,0), (-1,-1), 5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('TOPPADDING', (0,0), (-1,-1), 4.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4.5),
         ('LINEBEFORE', (0,0), (-1,-1), 4, AMBER),
     ]))
     return t
@@ -169,21 +106,28 @@ def create_table(data, widths, header_bg=NAVY, alt_stripes=True):
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('ALIGN', (0,1), (0,-1), 'LEFT'),
         ('GRID', (0,0), (-1,-1), 0.4, BORDER),
-        ('TOPPADDING', (0,0), (-1,-1), 3.5),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
-        ('LEFTPADDING', (0,0), (-1,-1), 4.5),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4.5),
+        ('TOPPADDING', (0,0), (-1,-1), 3.2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.2),
+        ('LEFTPADDING', (0,0), (-1,-1), 4.2),
+        ('RIGHTPADDING', (0,0), (-1,-1), 4.2),
     ]
     if alt_stripes:
         cmd.append(('ROWBACKGROUNDS', (0,1), (-1,-1), [BG_LIGHT, WHITE]))
     t.setStyle(TableStyle(cmd))
     return t
 
-# ── Image Utility ─────────────────────────────────────────────────────────────
-def embed_figure(fname, max_w_cm=14.5, max_h_cm=9.5, caption=""):
-    path = os.path.join(EDA_DIR, fname) if not os.path.isabs(fname) else fname
-    if not os.path.exists(path):
+# ── Image Utility with Multi-Directory Search ─────────────────────────────────
+def embed_figure(fname, max_w_cm=14.5, max_h_cm=8.5, caption=""):
+    # Check in BASE_DIR, EDA_DIR, and absolute path
+    if os.path.isabs(fname) and os.path.exists(fname):
+        path = fname
+    elif os.path.exists(os.path.join(BASE_DIR, fname)):
+        path = os.path.join(BASE_DIR, fname)
+    elif os.path.exists(os.path.join(EDA_DIR, fname)):
+        path = os.path.join(EDA_DIR, fname)
+    else:
         return [P(f"[Visual asset not found: {fname}]", 'Caption')]
+
     with PILImage.open(path) as im:
         pw, ph = im.size
     ratio = ph / pw
@@ -206,45 +150,45 @@ def draw_cover_canvas(canvas, doc):
 
     # Accent top and bottom stripes
     canvas.setFillColor(AMBER)
-    canvas.rect(0, H - 1.0 * cm, W, 1.0 * cm, fill=1, stroke=0)
+    canvas.rect(0, H - 0.9 * cm, W, 0.9 * cm, fill=1, stroke=0)
     canvas.setFillColor(TEAL)
-    canvas.rect(0, 0, W, 0.8 * cm, fill=1, stroke=0)
+    canvas.rect(0, 0, W, 0.75 * cm, fill=1, stroke=0)
 
     # Subtle concentric graphic elements (top right)
     canvas.setStrokeColor(colors.HexColor("#1E293B"))
     canvas.setLineWidth(1.2)
     for r in [180, 240, 300]:
-        canvas.circle(W, H - 1.0 * cm, r, fill=0, stroke=1)
+        canvas.circle(W, H - 0.9 * cm, r, fill=0, stroke=1)
 
     # Category Pill Badge
     canvas.setFillColor(BRAND_BLUE)
-    canvas.roundRect(MARGIN, H * 0.74, W - 2 * MARGIN, 1.2 * cm, 6, fill=1, stroke=0)
+    canvas.roundRect(MARGIN, H * 0.74, W - 2 * MARGIN, 1.15 * cm, 6, fill=1, stroke=0)
     canvas.setFillColor(WHITE)
-    canvas.setFont("Helvetica-Bold", 10.5)
-    canvas.drawCentredString(W / 2, H * 0.76, "SLIIT CODEFEST DATATHON 2026  ·  ROUND 1: URBAN FLOW ANALYTICS")
+    canvas.setFont("Helvetica-Bold", 10)
+    canvas.drawCentredString(W / 2, H * 0.758, "SLIIT CODEFEST DATATHON 2026  ·  ROUND 1: URBAN FLOW ANALYTICS")
 
     # Title & Subtitle
-    canvas.setFont("Helvetica-Bold", 27)
-    canvas.drawCentredString(W / 2, H * 0.645, "Urban Flow Analytics")
-    canvas.setFont("Helvetica-Bold", 22)
-    canvas.drawCentredString(W / 2, H * 0.605, "Data Challenge")
+    canvas.setFont("Helvetica-Bold", 26)
+    canvas.drawCentredString(W / 2, H * 0.65, "Urban Flow Analytics")
+    canvas.setFont("Helvetica-Bold", 21)
+    canvas.drawCentredString(W / 2, H * 0.61, "Data Challenge")
 
     canvas.setFillColor(AMBER)
-    canvas.setFont("Helvetica-Bold", 13.5)
-    canvas.drawCentredString(W / 2, H * 0.555, "Comprehensive Technical Report & Architecture Specification")
+    canvas.setFont("Helvetica-Bold", 13)
+    canvas.drawCentredString(W / 2, H * 0.56, "Comprehensive Technical Report & Architecture Specification")
 
     # Horizontal Divider Line
     canvas.setStrokeColor(TEAL)
     canvas.setLineWidth(2)
-    canvas.line(MARGIN * 1.8, H * 0.53, W - MARGIN * 1.8, H * 0.53)
+    canvas.line(MARGIN * 1.8, H * 0.535, W - MARGIN * 1.8, H * 0.535)
 
     # Team & University
     canvas.setFillColor(WHITE)
-    canvas.setFont("Helvetica-Bold", 14.5)
-    canvas.drawCentredString(W / 2, H * 0.485, "Team: Gravitons")
-    canvas.setFont("Helvetica", 10.5)
+    canvas.setFont("Helvetica-Bold", 14)
+    canvas.drawCentredString(W / 2, H * 0.49, "Team: Gravitons")
+    canvas.setFont("Helvetica", 10)
     canvas.setFillColor(colors.HexColor("#94A3B8"))
-    canvas.drawCentredString(W / 2, H * 0.46, "Sri Lanka Institute of Information Technology (SLIIT)")
+    canvas.drawCentredString(W / 2, H * 0.465, "Sri Lanka Institute of Information Technology (SLIIT)")
 
     # Member Roster Table Box
     members = [
@@ -254,13 +198,13 @@ def draw_cover_canvas(canvas, doc):
         ("Dinindu Vishwajith", "IT24101219", "0705011967", "dinindu1919@gmail.com"),
     ]
 
-    box_y = H * 0.22
-    box_h = H * 0.20
+    box_y = H * 0.225
+    box_h = H * 0.195
     canvas.setFillColor(colors.HexColor("#1E293B"))
     canvas.roundRect(MARGIN * 1.2, box_y, W - 2.4 * MARGIN, box_h, 8, fill=1, stroke=0)
 
-    y_header = box_y + box_h - 0.75 * cm
-    canvas.setFont("Helvetica-Bold", 8.5)
+    y_header = box_y + box_h - 0.72 * cm
+    canvas.setFont("Helvetica-Bold", 8.2)
     canvas.setFillColor(AMBER)
     canvas.drawString(MARGIN * 1.5, y_header, "Name")
     canvas.drawString(MARGIN * 1.5 + 4.2 * cm, y_header, "Student ID")
@@ -271,10 +215,10 @@ def draw_cover_canvas(canvas, doc):
     canvas.setLineWidth(0.6)
     canvas.line(MARGIN * 1.5, y_header - 3, W - MARGIN * 1.5, y_header - 3)
 
-    canvas.setFont("Helvetica", 8)
+    canvas.setFont("Helvetica", 7.8)
     canvas.setFillColor(WHITE)
     for j, (name, sid, phone, email) in enumerate(members):
-        y_curr = y_header - (j + 1) * 0.72 * cm
+        y_curr = y_header - (j + 1) * 0.70 * cm
         canvas.drawString(MARGIN * 1.5, y_curr, name)
         canvas.drawString(MARGIN * 1.5 + 4.2 * cm, y_curr, sid)
         canvas.drawString(MARGIN * 1.5 + 7.2 * cm, y_curr, phone)
@@ -282,29 +226,29 @@ def draw_cover_canvas(canvas, doc):
 
     # Footer Metadata
     canvas.setFillColor(colors.HexColor("#94A3B8"))
-    canvas.setFont("Helvetica-Oblique", 8.5)
-    canvas.drawCentredString(W / 2, 1.8 * cm, "Submission Date: September 2026")
+    canvas.setFont("Helvetica-Oblique", 8)
+    canvas.drawCentredString(W / 2, 1.7 * cm, "Submission Date: September 2026")
     canvas.setFillColor(colors.HexColor("#38BDF8"))
-    canvas.setFont("Helvetica-Bold", 8.5)
-    canvas.drawCentredString(W / 2, 1.2 * cm, "GitHub: https://github.com/thuva18/Datathon-2026-Urban-Flow-Analytics")
+    canvas.setFont("Helvetica-Bold", 8)
+    canvas.drawCentredString(W / 2, 1.15 * cm, "GitHub: https://github.com/thuva18/Datathon-2026-Urban-Flow-Analytics")
 
     canvas.restoreState()
 
 def draw_later_canvas(canvas, doc):
     canvas.saveState()
-    # Header
-    canvas.setFont("Helvetica", 7.5)
+    # Running Header
+    canvas.setFont("Helvetica", 7.2)
     canvas.setFillColor(TEXT_MUTED)
-    canvas.drawString(MARGIN, H - 1.15 * cm, "SLIIT Codefest Datathon 2026  ·  Urban Flow Analytics Challenge  ·  Team Gravitons")
-    canvas.drawRightString(W - MARGIN, H - 1.15 * cm, "Technical Report & Architecture")
+    canvas.drawString(MARGIN, H - 1.10 * cm, "SLIIT Codefest Datathon 2026  ·  Urban Flow Analytics Challenge  ·  Team Gravitons")
+    canvas.drawRightString(W - MARGIN, H - 1.10 * cm, "Technical Report & Architecture")
     canvas.setStrokeColor(BORDER)
     canvas.setLineWidth(0.4)
-    canvas.line(MARGIN, H - 1.25 * cm, W - MARGIN, H - 1.25 * cm)
+    canvas.line(MARGIN, H - 1.20 * cm, W - MARGIN, H - 1.20 * cm)
 
-    # Footer
-    canvas.line(MARGIN, 1.2 * cm, W - MARGIN, 1.2 * cm)
-    canvas.drawString(MARGIN, 0.8 * cm, "CONFIDENTIAL  ·  Evaluated for SLIIT Codefest 2026 Challenge Leaderboard")
-    canvas.drawRightString(W - MARGIN, 0.8 * cm, f"Page {doc.page}")
+    # Running Footer
+    canvas.line(MARGIN, 1.15 * cm, W - MARGIN, 1.15 * cm)
+    canvas.drawString(MARGIN, 0.75 * cm, "CONFIDENTIAL  ·  Evaluated for SLIIT Codefest 2026 Challenge Leaderboard")
+    canvas.drawRightString(W - MARGIN, 0.75 * cm, f"Page {doc.page}")
     canvas.restoreState()
 
 # ── Document Story Construction ───────────────────────────────────────────────
@@ -326,7 +270,7 @@ def generate_pdf():
     # =========================================================================
     # PAGE 1: COVER PAGE
     # =========================================================================
-    story.append(PageBreak())  # Rendered via canvas callback onFirstPage
+    story.append(PageBreak())
 
     # =========================================================================
     # PAGE 2: EXECUTIVE SUMMARY & TABLE OF CONTENTS
@@ -339,7 +283,7 @@ def generate_pdf():
                    "Operating across <b>48,601,782</b> real-world trip records spanning 12 months, our solution guarantees zero target "
                    "leakage through chronological partitioning and pre-trip feature proxies, operationalizing production-grade "
                    "gradient boosting pipelines for fare quotation, arrival estimation, and fleet dispatching.", 'Body'))
-    story.append(SP(6))
+    story.append(SP(5))
 
     # Executive Highlights Cards
     highlights = [
@@ -351,7 +295,7 @@ def generate_pdf():
     ]
     t_hl = create_table(highlights, [(W - 2 * MARGIN)/4]*4, header_bg=DARK_BLUE, alt_stripes=False)
     story.append(t_hl)
-    story.append(SP(8))
+    story.append(SP(7))
 
     story.append(make_section_banner("", "Table of Contents"))
     story.append(SP(4))
@@ -432,7 +376,7 @@ def generate_pdf():
     ]
     t_split = create_table(split_summary, [3.0 * cm, 5.0 * cm, 2.8 * cm, 5.7 * cm], header_bg=NAVY)
     story.append(t_split)
-    story.append(SP(6))
+    story.append(SP(5))
 
     story.append(P("2.2 Track 2.1: Upfront Fare Prediction Engine", 'H2'))
     story.append(P("<b>Problem Statement & Leakage Prevention:</b> Ride-hailing platforms require passenger fare quotations "
@@ -466,7 +410,7 @@ def generate_pdf():
                    "We overhauled this by: (1) Reverting to strict chronological train/val/test splits; (2) Pre-computing O-D corridor "
                    "priors (median duration and median pace) segmented by time-of-day (morning peak 7–10 AM, evening peak 4–8 PM, and off-peak); "
                    "(3) Incorporating intra-borough and airport binary spatial flags. This achieved a robust, generalizable <b>Test R² of 0.8318</b>.", 'Body'))
-    story.append(SP(6))
+    story.append(SP(5))
 
     story.append(P("2.4 Track 3.1: The Fleet Dispatcher (72-Hour Ahead Demand Forecasting)", 'H2'))
     story.append(P("<b>Methodology:</b> Taxi fleet operators must position idle vehicles in advance of demand surges. We selected the "
@@ -486,7 +430,7 @@ def generate_pdf():
     story.append(SP(3))
     story.append(P("The final 72 hours of the operational calendar (March 28–31, 2026) were strictly held out as the forward forecasting "
                    "test window. Evaluating HistGradientBoosting with native categorical encoding on zone IDs yielded <b>R² = 0.9177</b>.", 'Body'))
-    story.append(SP(6))
+    story.append(SP(5))
 
     story.append(P("2.5 Track 3.2: Spatial-Temporal Zone Clustering (Urban Hotspots)", 'H2'))
     story.append(P("<b>Unsupervised Clustering:</b> To uncover macro-mobility behaviors across the 265 taxi zones, we constructed a "
@@ -515,7 +459,7 @@ def generate_pdf():
     ]
     t_mr = create_table(metric_reasons, [4.5 * cm, 3.2 * cm, 8.8 * cm], header_bg=NAVY)
     story.append(t_mr)
-    story.append(SP(6))
+    story.append(SP(5))
 
     story.append(P("3.2 Comprehensive Multi-Track Performance Summary", 'H2'))
     story.append(P("The finalized, tuned models achieved the following metrics on strictly held-out test data:", 'Body'))
@@ -530,7 +474,7 @@ def generate_pdf():
     ]
     t_fr = create_table(full_results, [4.2 * cm, 4.4 * cm, 2.0 * cm, 2.0 * cm, 2.2 * cm, 1.7 * cm], header_bg=DARK_BLUE)
     story.append(t_fr)
-    story.append(SP(6))
+    story.append(SP(5))
 
     story.append(P("3.3 Model Family Cross-Benchmarking (Tracks 2.1 & 2.2)", 'H2'))
     bench_comp = [
@@ -558,14 +502,14 @@ def generate_pdf():
     # PAGE 8: SECTION 4 — SOLUTION ARCHITECTURE DIAGRAM
     # =========================================================================
     story.append(make_section_banner("4.0", "Solution Architecture Diagram"))
-    story.append(SP(4))
+    story.append(SP(3))
     story.append(P("The multi-tier diagram below illustrates the end-to-end machine learning system architecture engineered by "
                    "Team Gravitons—from high-throughput columnar DuckDB ingestion of 48.6M raw records through automated anomaly remediation, "
                    "pre-trip feature extraction, chronological holdout splitting, gradient-boosted training, and production serialization.", 'Body'))
-    story.append(SP(4))
+    story.append(SP(3))
 
-    # Embed our beautiful newly generated architecture diagram
-    story += embed_figure("architecture_diagram.png", max_w_cm=16.0, max_h_cm=16.5,
+    # Embed our beautiful newly generated architecture diagram (checks BASE_DIR and EDA_DIR)
+    story += embed_figure("architecture_diagram.png", max_w_cm=16.5, max_h_cm=17.5,
                           caption="Figure 4.1: Complete End-to-End System Architecture Pipeline for Team Gravitons ML Platform.")
     story.append(PageBreak())
 
@@ -573,12 +517,12 @@ def generate_pdf():
     # PAGES 9–11: SECTION 5 — EXPLORATORY DATA ANALYSIS & KINEMATICS
     # =========================================================================
     story.append(make_section_banner("5.0", "Exploratory Data Analysis — Key Visualizations"))
-    story.append(SP(4))
+    story.append(SP(3))
 
     story.append(P("5.1 Anomaly Quantification & Temporal Demand Seasonality", 'H2'))
     story += embed_figure("01_anomaly_quantification_summary.png", max_w_cm=14.5, max_h_cm=7.8,
                           caption="Figure 5.1: Empirical distribution of 8 anomaly categories across 48,601,782 records. Missing rider count dominates at 26% and was imputed to preserve 12.6M records.")
-    story.append(SP(4))
+    story.append(SP(3))
     story += embed_figure("02_temporal_demand_patterns.png", max_w_cm=14.5, max_h_cm=7.8,
                           caption="Figure 5.2: Monthly trip volume seasonality (Top) showing winter demand suppression, and 24-hour diurnal pickup profile (Bottom) revealing standard 8 AM and 6 PM commuter rush peaks.")
     story.append(PageBreak())
@@ -587,7 +531,7 @@ def generate_pdf():
     story.append(P("5.2 Spatial Hotspots & Inter-Borough Traffic Flow Dynamics", 'H2'))
     story += embed_figure("03_spatial_hotspots_and_od_corridors.png", max_w_cm=14.5, max_h_cm=7.8,
                           caption="Figure 5.3: Top 20 pickup zones (Left) dominated by Midtown Manhattan and JFK Airport, and top origin-destination corridors (Right) illustrating high-density urban transit channels.")
-    story.append(SP(4))
+    story.append(SP(3))
     story += embed_figure("04_borough_flow_matrix.png", max_w_cm=12.5, max_h_cm=7.8,
                           caption="Figure 5.4: Inter-borough origin-to-destination flow matrix heatmap. Intra-Manhattan trips form the vast majority of volume, followed by Manhattan ↔ Queens airport channels.")
     story.append(PageBreak())
@@ -596,7 +540,7 @@ def generate_pdf():
     story.append(P("5.3 Urban Congestion Kinematics & 72-Hour Ahead Dispatch Forecast", 'H2'))
     story += embed_figure("06_traffic_speed_deceleration.png", max_w_cm=14.5, max_h_cm=7.8,
                           caption="Figure 5.5: Diurnal speed (mph) vs. pace (min/mile) deceleration curve. Evening rush (4–7 PM) triggers a severe 2.3x speed drop from 14.2 mph to 6.1 mph.")
-    story.append(SP(4))
+    story.append(SP(3))
     story += embed_figure("08_task_3_1_demand_forecast_72h.png", max_w_cm=14.5, max_h_cm=7.8,
                           caption="Figure 5.6: Task 3.1 72-Hour Ahead Dispatch Demand Forecast (R² = 0.9177) across top 5 hubs, tracking actual demand across diurnal cycles with high precision.")
     story.append(PageBreak())
@@ -629,8 +573,8 @@ def generate_pdf():
     ]
     for title, text in key_findings:
         story.append(P(f"• <b>{title}:</b> {text}", 'Body'))
-        story.append(SP(3))
-    story.append(SP(6))
+        story.append(SP(2.5))
+    story.append(SP(5))
 
     story.append(P("6.2 Strategic Business Implications & Operational Roadmap", 'H2'))
     implications = [
@@ -646,7 +590,7 @@ def generate_pdf():
     ]
     for title, text in implications:
         story.append(P(f"• <b>{title}:</b> {text}", 'Body'))
-        story.append(SP(3))
+        story.append(SP(2.5))
     story.append(PageBreak())
 
     # Page 13: Conclusions & Deliverables Checklist
@@ -665,7 +609,7 @@ def generate_pdf():
         [P("Track 3.1 72h Dispatch", 'TCL'), "Autoregressive HGBR (Lag 24–336)", P("<b>Test R² = 0.9177 | MAE = 27.4/h</b>", 'TC'), "models/demand_forecasting_model.pkl"],
         [P("Track 3.2 Zone Clustering", 'TCL'), "K-Means (k=4 Centroids)", P("<b>Silhouette = 0.1848 | 4 Archetypes</b>", 'TC'), "models/zone_clustering_model.pkl"],
         [P("Master Jupyter Notebook", 'TCL'), "Full End-to-End Analytics & Pipeline", P("<b>Executed & Validated</b>", 'TC'), "code/Gravitons_FinalNotebook.ipynb"],
-        [P("Technical Report & Architecture", 'TCL'), "15-Page Publication-Grade PDF", P("<b>Section 4 Brief Compliant</b>", 'TC'), "Gravitons_Technical_Report.pdf"],
+        [P("Technical Report & Architecture", 'TCL'), "14-Page Publication-Grade PDF", P("<b>Section 4 Brief Compliant</b>", 'TC'), "Gravitons_Technical_Report.pdf"],
         [P("Environment Bootstrapper", 'TCL'), "Zero-Friction Pip & Colab Auto-detect", P("<b>Universal Mac/Win/Colab</b>", 'TC'), "requirements.txt + Cell 1 Bootstrapper"]
     ]
     t_deliv = create_table(deliv_summary, [4.0 * cm, 4.4 * cm, 4.2 * cm, 3.9 * cm], header_bg=TEAL)
@@ -673,7 +617,7 @@ def generate_pdf():
     story.append(PageBreak())
 
     # =========================================================================
-    # PAGES 14 & 15: SECTION 7 — REFERENCES, APPENDIX & ARTIFACTS
+    # PAGES 14: SECTION 7 — REFERENCES, APPENDIX & ARTIFACTS
     # =========================================================================
     story.append(make_section_banner("7.0", "References & Technical Appendix"))
     story.append(SP(4))
@@ -691,7 +635,7 @@ def generate_pdf():
     ]
     t_deps = create_table(deps, [3.8 * cm, 2.7 * cm, 10.0 * cm], header_bg=NAVY)
     story.append(t_deps)
-    story.append(SP(6))
+    story.append(SP(5))
 
     story.append(P("7.2 Serialized Model Binary Manifest", 'H2'))
     models_manifest = [
@@ -703,14 +647,14 @@ def generate_pdf():
     ]
     t_mm = create_table(models_manifest, [4.8 * cm, 2.2 * cm, 4.8 * cm, 4.7 * cm], header_bg=DARK_BLUE)
     story.append(t_mm)
-    story.append(SP(6))
+    story.append(SP(5))
 
     story.append(P("7.3 Open-Source Code Repository & Hardware Specifications", 'H2'))
     story.append(P("• <b>GitHub Repository:</b> <code>https://github.com/thuva18/Datathon-2026-Urban-Flow-Analytics</code><br/>"
                    "• <b>Reproducibility:</b> Running <code>code/Gravitons_FinalNotebook.ipynb</code> executes end-to-end in < 15 minutes.<br/>"
                    "• <b>Hardware Profile:</b> Benchmarked on Apple Silicon (M-Series / 16GB RAM) and standard Google Colab Linux T4 instances.<br/>"
                    "• <b>Data License & Ethics:</b> All data utilized exclusively for SLIIT Codefest 2026 evaluation under challenge guidelines.", 'Body'))
-    story.append(SP(8))
+    story.append(SP(6))
 
     # Signature Block
     sig_data = [
