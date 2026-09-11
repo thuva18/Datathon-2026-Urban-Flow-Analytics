@@ -281,13 +281,13 @@ def draw_top_tier_architecture():
     # Track 3.1
     draw_component_node(8.2, 2.22, 3.4, 1.65, "Track 3.1: 72h Fleet Dispatch",
                         ["• Model: Autoregressive HGBR",
-                         "• Top 5 high-density hub forecasting",
+                         "• Top 80 high-density hubs forecasting",
                          "• 72h out-of-sample forward horizon",
                          "• Multi-step lags (lag_24 to 336)",
                          "• Fortnightly cyclic memory"],
                         header_color='#C2410C')
-    draw_metric_pill(8.35, 2.28, "Test R² = 0.9177", bg_color='#10B981')
-    draw_metric_pill(9.85, 2.28, "MAE = 27.4 pkp/h", bg_color='#0284C7')
+    draw_metric_pill(8.35, 2.28, "Test R² = 0.9383", bg_color='#10B981')
+    draw_metric_pill(9.85, 2.28, "MAE = 11.3 pkp/h", bg_color='#0284C7')
 
     # Track 3.2
     draw_component_node(12.0, 2.22, 3.2, 1.65, "Track 3.2: Spatial Clustering",
@@ -329,7 +329,7 @@ def draw_top_tier_architecture():
 
     draw_component_node(8.2, 0.40, 3.4, 0.98, "demand_forecasting_model.pkl",
                         ["• Autoregressive Multi-Lag Engine",
-                         "• Serialized Size: 4.23 MB",
+                         "• Serialized Size: 1.81 MB",
                          "• 72-hour forward projection"],
                         header_color='#15803D')
 

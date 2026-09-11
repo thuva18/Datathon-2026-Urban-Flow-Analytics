@@ -290,7 +290,7 @@ def generate_pdf():
         [P("<b>Data Scale & Compaction</b>", 'TH'), P("<b>Leakage Prevention</b>", 'TH'), P("<b>Predictive Excellence</b>", 'TH'), P("<b>Artifact Reproducibility</b>", 'TH')],
         [P("48.6M raw records<br/>83.2% Parquet savings<br/>0.45s query latency", 'TC'),
          P("O-D corridor medians<br/>Strict chronological splits<br/>Zero metered lookahead", 'TC'),
-         P("Fare R²: <b>0.7633</b><br/>ETA R²: <b>0.8318</b><br/>Dispatch R²: <b>0.9177</b>", 'TC'),
+         P("Fare R²: <b>0.7633</b><br/>ETA R²: <b>0.8318</b><br/>Dispatch R²: <b>0.9383</b>", 'TC'),
          P("4 Serialized .pkl models<br/>Single-click Jupyter<br/>Universal bootstrapper", 'TC')]
     ]
     t_hl = create_table(highlights, [(W - 2 * MARGIN)/4]*4, header_bg=DARK_BLUE, alt_stripes=False)
@@ -414,7 +414,7 @@ def generate_pdf():
 
     story.append(P("2.4 Track 3.1: The Fleet Dispatcher (72-Hour Ahead Demand Forecasting)", 'H2'))
     story.append(P("<b>Methodology:</b> Taxi fleet operators must position idle vehicles in advance of demand surges. We selected the "
-                   "top 5 highest-density pickup hubs across NYC and constructed a continuous hourly time series spanning all 12 months. "
+                   "top 80 highest-density pickup hubs (>85% volume) across NYC and constructed a continuous hourly time series spanning all 12 months. "
                    "Rather than fitting separate fragile statistical models, we converted this into a multi-step supervised autoregressive "
                    "learning framework:", 'Body'))
     story.append(SP(2))
@@ -429,7 +429,7 @@ def generate_pdf():
     story.append(t_dfe)
     story.append(SP(3))
     story.append(P("The final 72 hours of the operational calendar (March 28–31, 2026) were strictly held out as the forward forecasting "
-                   "test window. Evaluating HistGradientBoosting with native categorical encoding on zone IDs yielded <b>R² = 0.9177</b>.", 'Body'))
+                   "test window. Evaluating HistGradientBoosting with native categorical encoding on zone IDs yielded <b>R² = 0.9383</b>.", 'Body'))
     story.append(SP(5))
 
     story.append(P("2.5 Track 3.2: Spatial-Temporal Zone Clustering (Urban Hotspots)", 'H2'))
@@ -469,7 +469,7 @@ def generate_pdf():
         [P("Track & Objective", 'TH'), P("Model Algorithm", 'TH'), P("Validation R²", 'TH'), P("Test R²", 'TH'), P("Test MAE", 'TH'), P("Test RMSE", 'TH')],
         [P("Track 2.1: Upfront Fare Prediction", 'TCL'), "HistGradientBoostingRegressor", "0.7357", P("<b>0.7633</b>", 'TCB'), P("<b>$4.47</b>", 'TCB'), "$8.39"],
         [P("Track 2.2: Trip Duration / ETA", 'TCL'), "Corridored HistGradientBoosting", "0.7726", P("<b>0.8318</b>", 'TCB'), P("<b>3.48 min</b>", 'TCB'), "5.94 min"],
-        [P("Track 3.1: 72h Fleet Dispatch", 'TCL'), "Autoregressive HGBR (Lag 24–336)", "—", P("<b>0.9177</b>", 'TCB'), P("<b>27.37 pkp/h</b>", 'TCB'), "39.78 pkp/h"],
+        [P("Track 3.1: 72h Fleet Dispatch", 'TCL'), "Autoregressive HGBR (Lag 24–336)", "—", P("<b>0.9383</b>", 'TCB'), P("<b>11.34 pkp/h</b>", 'TCB'), "16.85 pkp/h"],
         [P("Track 3.2: Spatial Zone Clustering", 'TCL'), "K-Means (k=4 Centroids)", "—", P("Silhouette: <b>0.1848</b>", 'TCB'), P("<b>4 Archetypes</b>", 'TCB'), "257 Active Zones"]
     ]
     t_fr = create_table(full_results, [4.2 * cm, 4.4 * cm, 2.0 * cm, 2.0 * cm, 2.2 * cm, 1.7 * cm], header_bg=DARK_BLUE)
@@ -542,7 +542,7 @@ def generate_pdf():
                           caption="Figure 5.5: Diurnal speed (mph) vs. pace (min/mile) deceleration curve. Evening rush (4–7 PM) triggers a severe 2.3x speed drop from 14.2 mph to 6.1 mph.")
     story.append(SP(3))
     story += embed_figure("08_task_3_1_demand_forecast_72h.png", max_w_cm=14.5, max_h_cm=7.8,
-                          caption="Figure 5.6: Task 3.1 72-Hour Ahead Dispatch Demand Forecast (R² = 0.9177) across top 5 hubs, tracking actual demand across diurnal cycles with high precision.")
+                          caption="Figure 5.6: Task 3.1 72-Hour Ahead Dispatch Demand Forecast (R² = 0.9383) across top 80 hubs, tracking actual demand across diurnal cycles with high precision.")
     story.append(PageBreak())
 
     # =========================================================================
@@ -562,7 +562,7 @@ def generate_pdf():
          "Models trained on metered distance_miles report artificially inflated R² (>0.95) that collapses completely in production "
          "because actual distance is unknown prior to trip completion. Replacing metered distance with our three-tier pre-trip O-D "
          "median distance proxy guarantees zero test leakage while sustaining a robust production R² of 0.7633 and MAE of $4.47."),
-        ("High Predictability of Multi-Day Fleet Demand (R² = 0.9177)",
+        ("High Predictability of Multi-Day Fleet Demand (R² = 0.9383)",
          "Urban taxi demand exhibits powerful 24-hour and 168-hour periodicities. Integrating deep autoregressive lags (lag_24 to lag_336) "
          "empowers fleet dispatchers to position vehicles up to 72 hours in advance with a low mean error of 27.4 pickups/hour, "
          "substantially reducing idle cruising and passenger wait times."),
@@ -606,7 +606,7 @@ def generate_pdf():
         [P("Deliverable Item", 'TH'), P("Operational Implementation", 'TH'), P("Validation Metric / Benchmark", 'TH'), P("Artifact Reference", 'TH')],
         [P("Track 2.1 Upfront Fare Model", 'TCL'), "HistGradientBoosting + TargetEncoder", P("<b>Test R² = 0.7633 | MAE = $4.47</b>", 'TC'), "models/fare_prediction_model.pkl"],
         [P("Track 2.2 ETA Estimator", 'TCL'), "Corridored HGBR + Pace Priors", P("<b>Test R² = 0.8318 | MAE = 3.48m</b>", 'TC'), "models/duration_prediction_model.pkl"],
-        [P("Track 3.1 72h Dispatch", 'TCL'), "Autoregressive HGBR (Lag 24–336)", P("<b>Test R² = 0.9177 | MAE = 27.4/h</b>", 'TC'), "models/demand_forecasting_model.pkl"],
+        [P("Track 3.1 72h Dispatch", 'TCL'), "Autoregressive HGBR (Lag 24–336)", P("<b>Test R² = 0.9383 | MAE = 11.3/h</b>", 'TC'), "models/demand_forecasting_model.pkl"],
         [P("Track 3.2 Zone Clustering", 'TCL'), "K-Means (k=4 Centroids)", P("<b>Silhouette = 0.1848 | 4 Archetypes</b>", 'TC'), "models/zone_clustering_model.pkl"],
         [P("Master Jupyter Notebook", 'TCL'), "Full End-to-End Analytics & Pipeline", P("<b>Executed & Validated</b>", 'TC'), "code/Gravitons_FinalNotebook.ipynb"],
         [P("Technical Report & Architecture", 'TCL'), "14-Page Publication-Grade PDF", P("<b>Section 4 Brief Compliant</b>", 'TC'), "Gravitons_Technical_Report.pdf"],
@@ -642,7 +642,7 @@ def generate_pdf():
         [P("Model File Name", 'TH'), P("Binary Size", 'TH'), P("Input Feature Dimensions", 'TH'), P("Inference Target", 'TH')],
         [P("fare_prediction_model.pkl", 'TCLB'), "1.73 MB", "10 Features (Target-Encoded)", "Quoted Base Fare ($)"],
         [P("duration_prediction_model.pkl", 'TCLB'), "2.70 MB", "12 Features (Corridor Priors)", "Trip Duration (Minutes)"],
-        [P("demand_forecasting_model.pkl", 'TCLB'), "4.23 MB", "14 Time-Series Lag Features", "Hourly Zone Pickups (Trips/hr)"],
+        [P("demand_forecasting_model.pkl", 'TCLB'), "1.81 MB", "14 Time-Series Lag Features", "Hourly Zone Pickups (Trips/hr)"],
         [P("zone_clustering_model.pkl", 'TCLB'), "0.003 MB", "24 Diurnal Demand Profile Bins", "Spatial Archetype (0, 1, 2, 3)"]
     ]
     t_mm = create_table(models_manifest, [4.8 * cm, 2.2 * cm, 4.8 * cm, 4.7 * cm], header_bg=DARK_BLUE)
