@@ -1,7 +1,8 @@
 # SLIIT Codefest Datathon 2026: Urban Flow Analytics Data Challenge 🚖📊
+### **Team: Gravitons**
 
 ## Overview
-This repository contains the complete end-to-end data pipeline, anomaly quantification framework, exploratory data analysis (EDA), predictive machine learning modeling, and spatial-temporal clustering for **Round 1 of the Urban Flow Analytics Data Challenge** (Datathon 2026).
+This repository contains the complete end-to-end data pipeline, anomaly quantification framework, exploratory data analysis (EDA), predictive machine learning modeling, and spatial-temporal clustering for **Round 1 of the Urban Flow Analytics Data Challenge** (Datathon 2026) developed by **Team Gravitons**.
 
 The solution unifies high-volume urban taxi trip records from NYC across a full 12-month period (April 2025 – March 2026) totaling **48,601,782 rides** joined with spatial taxi zone metadata across 265 discrete geographical zones.
 
@@ -82,7 +83,8 @@ The trained models are serialized in `.pkl` format under `models/`:
 ```
 ├── Urban_Flow_Analytics_Data_Merge_and_EDA.ipynb  # Primary master executed notebook (EDA + Models)
 ├── code/
-│   └── TeamName_FinalNotebook.ipynb              # Competition submission-named notebook
+│   ├── Gravitons_FinalNotebook.ipynb             # Official team submission notebook (Team Gravitons)
+│   └── TeamName_FinalNotebook.ipynb              # Competition template submission notebook
 ├── models/                                       # Serialized model artifacts (.pkl format)
 │   ├── fare_prediction_model.pkl
 │   ├── duration_prediction_model.pkl
